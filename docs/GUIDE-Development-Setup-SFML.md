@@ -43,7 +43,9 @@ If the above does not work, since you might not have the `cmake` binary on your 
 - Click the `Reload CMake Project` button in the top right corner.
 - CLion will automatically configure the project with the provided CMakeLists file.
 
-The following lines are responsible for locating SFML:
+Be aware that the first time configuring with CMake will take a while, since it will download the SFML source code.
+
+The following lines are responsible for locating and linking SFML:
 
 ```cmake
 # Fetch the source code of SFML
@@ -98,7 +100,13 @@ If the build is successful, you should see the following output:
 ./cmake-build-debug/sfml-example/sfml-example.exe
 ```
 
-The program should open a window with a simple SFML example.
+Or alternatively you can run the executable from the CLion IDE.
+
+- Select the `sfml-example` target in the `Run/Debug Configurations` dropdown.
+- Click the `Run` button in the top right corner of the CLion IDE.
+- CLion will automatically run the project with the provided CMakeLists file.
+
+The program should simply open a window using SFML.
 
 If it crashes or does not open, or something went wrong, you should contact @HackXIt
 
