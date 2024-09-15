@@ -107,3 +107,25 @@ I have added it only, so that there is a backup plan for linking pre-built SFML 
     - For example, `C:\Tools\SFML-2.6.1`
   - Edit the `Path` system variable and add the SFML bin directory.
     - For example, `C:\Tools\SFML-2.6.1\bin` 
+
+To use the pre-built SFML libraries, you can modify the CMakeLists.txt file to link the libraries directly:
+
+```cmake
+# Add the executable and link SFML
+add_executable(sfml-example src/main.cpp)
+target_link_libraries(sfml-example PRIVATE
+        ${SFML_ROOT}/lib/libsfml-graphics.a
+        ${SFML_ROOT}/lib/libsfml-window.a
+        ${SFML_ROOT}/lib/libsfml-system.a
+        ${SFML_ROOT}/lib/libsfml-audio.a
+        ${SFML_ROOT}/lib/libsfml-network.a
+        ${SFML_ROOT}/lib/libsfml-main.a
+        ${SFML_ROOT}/lib/libsfml-graphics-s.a
+        ${SFML_ROOT}/lib/libsfml-window-s.a
+        ${SFML_ROOT}/lib/libsfml-system-s.a
+        ${SFML_ROOT}/lib/libsfml-audio-s.a
+        ${SFML_ROOT}/lib/libsfml-network-s.a
+        ${SFML_ROOT}/lib/libsfml-main-s.a
+        )
+target_compile_features(sfml-example PRIVATE cxx_std_17)
+```
