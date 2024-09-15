@@ -27,7 +27,7 @@ These build instructions assume a basic knowledge of how to work with CMake, CLi
 
 There is an additional GUIDE with detailed step-by-step instructions in the `docs` folder, named:
 - [`GUIDE-Development-Setup-SFML.md`](../docs/GUIDE-Development-Setup-SFML.md) for setting up the project with SFML
-- [`GUIDE-Development-Setup-SDL2.md`](../docs/GUIDE-Development-Setup-SFML.md) for setting up the project with SDL2
+- [`GUIDE-Development-Setup-SDL2.md`](../docs/GUIDE-Development-Setup-SDL2.md) for setting up the project with SDL2
 
 The following instructions assume that you have already completed the steps in the setup guide.
 
@@ -41,6 +41,8 @@ _Command line approach - **you will require the necessary tools installed and on
 2. Run the following commands in the project root directory:
 ```shell
 cmake --build . --target collision-detection
+# Optional for faster build
+cmake --build . --target collision-detection -- -j4
 ```
 3. Run the executable in the `build` directory
 ```shell
