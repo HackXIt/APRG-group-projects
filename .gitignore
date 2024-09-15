@@ -1,3 +1,10 @@
+# Project specific
+**/cmake-build-debug/
+
+# IDE specific
+.idea/
+!.idea/APRG-collision-detection.iml
+
 # Prerequisites
 *.d
 
