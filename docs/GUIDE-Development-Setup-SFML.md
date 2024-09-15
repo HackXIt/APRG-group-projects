@@ -37,6 +37,12 @@ The project setup will be performed with the provided CMakeLists file.
 cmake .
 ```
 
+If the above does not work, since you might not have the `cmake` binary on your path, you can use the CLion IDE to configure.
+
+- Open the `sfml-example/CMakeLists.txt` file in CLion.
+- Click the `Reload CMake Project` button in the top right corner.
+- CLion will automatically configure the project with the provided CMakeLists file.
+
 The following lines are responsible for locating SFML:
 
 ```cmake
@@ -71,6 +77,12 @@ endif()
 # Execute in root project directory (APRG-group-projects)
 cmake --build . --target sfml-example
 ```
+
+Again, if the above does not work, you can use the CLion IDE to build the project.
+
+- Select the `sfml-example` target in the `Run/Debug Configurations` dropdown.
+- Click the `Build` button in the top right corner of the CLion IDE.
+- CLion will automatically build the project with the provided CMakeLists file.
 
 If the build is successful, you should see the following output:
 
