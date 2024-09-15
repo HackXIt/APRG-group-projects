@@ -23,22 +23,10 @@ SFML is a versatile and easy-to-use library used for developing multimedia appli
 - Click the `+` icon and select `MinGW` from the dropdown menu.
 - Set the `Environment` field to the path of the extracted MinGW folder.
   - For example, `C:\Tools\mingw64`
+- Move the new MinGW toolchain to the top of the list by clicking the up arrow.
+  - Make sure it is highlighted in bold for it to be used.
 
-## 2. Install SFML
-
-- Download the SFML 2.6.1 version from the official website: https://www.sfml-dev.org/download/sfml/2.6.1/
-  - Download the `GCC 13.1.0 MinGW (SEH) - 64-bit` version.
-- Extract the downloaded zip file to a location where you can reference it in your project.
-  - For example, `C:\Tools\SFML-2.6.1`
-  - The extracted folder should contain an `include` folder, a `lib` folder, and a `bin` folder. 
-- Add the SFML bin directory to the system PATH.
-  - Open the system environment variables settings.
-  - Add a new system variable with the name `SFML_ROOT` and the value of the SFML directory.
-    - For example, `C:\Tools\SFML-2.6.1`
-  - Edit the `Path` system variable and add the SFML bin directory.
-    - For example, `C:\Tools\SFML-2.6.1\bin` 
-
-## 3. Setup SFML in project
+## 2. Setup SFML in project
 
 1. Configure CMAKE project
 
@@ -52,14 +40,29 @@ cmake .
 The following lines are responsible for locating SFML:
 
 ```cmake
-# Find the SFML package
-find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+# Fetch the source code of SFML
+include(FetchContent)
+FetchContent_Declare(SFML
+        GIT_REPOSITORY https://github.com/SFML/SFML.git
+        GIT_TAG 2.6.x
+        GIT_SHALLOW ON
+        EXCLUDE_FROM_ALL
+        SYSTEM)
+FetchContent_MakeAvailable(SFML)
 
-# Include SFML headers
-include_directories(${SFML_INCLUDE_DIRS})
+# Add the executable and link SFML
+add_executable(sfml-example src/main.cpp)
+target_link_libraries(sfml-example PRIVATE sfml-graphics)
+target_compile_features(sfml-example PRIVATE cxx_std_17)
 
-# Link SFML libraries to your executable
-target_link_libraries(collision-detection sfml-graphics sfml-window sfml-system)
+# On windows we need to copy the DLL to the output path
+if(WIN32)
+  add_custom_command(
+          TARGET sfml-example
+          COMMENT "Copy OpenAL DLL"
+          PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:sfml-example>
+          VERBATIM)
+endif()
 ```
 
 2. Build the example project using SFML
@@ -87,3 +90,20 @@ The program should open a window with a simple SFML example.
 
 If it crashes or does not open, or something went wrong, you should contact @HackXIt
 
+# (OPTIONAL) Manual installation of pre-built SFML
+
+**This step is optional and NOT REQUIRED when using CMake for fetching the SFML sources.**
+
+I have added it only, so that there is a backup plan for linking pre-built SFML libraries.
+
+- Download the SFML 2.6.1 version from the official website: https://www.sfml-dev.org/download/sfml/2.6.1/
+  - Download the `GCC 13.1.0 MinGW (SEH) - 64-bit` version.
+- Extract the downloaded zip file to a location where you can reference it in your project.
+  - For example, `C:\Tools\SFML-2.6.1`
+  - The extracted folder should contain an `include` folder, a `lib` folder, and a `bin` folder.
+- Add the SFML bin directory to the system PATH.
+  - Open the system environment variables settings.
+  - Add a new system variable with the name `SFML_ROOT` and the value of the SFML directory.
+    - For example, `C:\Tools\SFML-2.6.1`
+  - Edit the `Path` system variable and add the SFML bin directory.
+    - For example, `C:\Tools\SFML-2.6.1\bin` 
