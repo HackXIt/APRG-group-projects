@@ -8,7 +8,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 include(FetchContent)
 FetchContent_Declare(SDL2
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG release-2.30.7
+        GIT_TAG release-2.30.x
         GIT_SHALLOW ON
         EXCLUDE_FROM_ALL
         SYSTEM)
