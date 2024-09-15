@@ -13,3 +13,15 @@
 - [ ] Live-Demo => Schleife der 4 Kollisionen (Sphere to Plane/Triangle/Sphere/AABB) => Bis Sonntag 22.09
 - [ ] Dokumentation => Bis Dienstag vor Abgabe 24.09
   - [ ] Testen der Kollisionserkennung
+
+# Dependencies
+
+# References
+
+- [SFML](https://www.sfml-dev.org/)
+- [SDL2 Wiki](https://wiki.libsdl.org/SDL2/FrontPage)
+
+# How-to-build
+
+# How-to-run
+
