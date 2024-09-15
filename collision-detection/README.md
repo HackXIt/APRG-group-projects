@@ -2,7 +2,7 @@
 
 # Projekt-Aufteilung
 
-- [ ] Projekt mit CMake konfigurieren (... libSDL2 oder SFML hinzufügen, etc...)
+- [x] Projekt mit CMake konfigurieren (... libSDL2 oder SFML hinzufügen, etc...)
 => sollte bis morgen 16.09 ready sein (Leeres Fenster mit Beispiel-Library-Code)
 - [ ] Klassen zur Anwendung der Methode einrichten (Plane/Triangle/Sphere/AABB)
 => In library doku zu recherchieren (jeder): Bis Freitag 20.09 
