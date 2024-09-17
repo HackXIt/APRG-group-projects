@@ -1,5 +1,35 @@
 ﻿# APRG-collision-detection
 
+In this group project we will implement a collision detection algorithm, to perform dynamic intersection tests between different shapes.
+
+## Task instructions
+
+The task did not have a formal description, just some topics to tick off, which are:
+
+- [ ] Dynamic Intersection Tests
+ - [ ] Interval Halfing Method
+ - [ ] Moving sphere to Plane/Triangle/Sphere/AABB
+
+To write a more formal description, we suggest to ourselves the following goals:
+
+- Implement a collision detection algorithm for the following shapes:
+  - Plane
+  - Triangle
+  - Sphere
+  - Axis-Aligned Bounding Box (AABB)
+- Implement the "dynamic intersection tests"
+- Implement the Interval Halfing Method for dynamic intersection tests
+- Implement the Moving Sphere to Plane/Triangle/Sphere/AABB tests
+  - A debug line shall be shown when a collision is detected (for debugging and showcase)
+  - The collision detection shall be done in a loop for all 4 shapes
+    - As an example, we will rotate the sphere in a circle and have it collide with the other shapes
+    - Rotation of the parts to collide with will showcase different angles
+    - As an alternative mode - Select the shape to collide with and move the Sphere with cursors (Optional)
+
+The above will be implemented in C++ using the SFML library for graphics and window management.
+
+We try to use external libraries as much as possible, to minimize development workloads and focus on the explanation of the algorithms.
+
 # Projekt-Aufteilung
 
 - [x] Projekt mit CMake konfigurieren (... libSDL2 oder SFML hinzufügen, etc...)
