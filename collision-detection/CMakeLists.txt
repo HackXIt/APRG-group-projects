@@ -14,8 +14,18 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+
 # Add the executable and link SFML
-add_executable(collision-detection src/main.cpp)
+add_executable(collision-detection src/main.cpp
+        src/CircularMotion.cpp
+        src/ConfigurationWindow.cpp)
+
+# Copy the font file to the build directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
+        ${CMAKE_CURRENT_BINARY_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
+        COPYONLY)
+
 target_link_libraries(collision-detection PRIVATE sfml-graphics)
 target_compile_features(collision-detection PRIVATE cxx_std_17)
 
