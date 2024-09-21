@@ -6,7 +6,8 @@
 #define CONFIGURATIONWINDOW_H
 
 
-#include <../../cmake-build-debug/_deps/sfml-src/include/SFML/Graphics.hpp>
+#include <functional>
+#include <SFML/Graphics.hpp>
 #include "CircularMotion.hpp"
 
 /**
@@ -44,17 +45,7 @@ private:
  sf::Font& font;                   ///< Reference to the SFML font for text rendering.
 
  // Enum for editing fields
- enum class EditingField { None, Radius, CenterX, CenterY, Angle, AngularSpeed, AngularSpeedIncrement, IsClockwise };
- EditingField currentEditingField; ///< Currently selected field for editing.
-
- // Input strings for editing
- std::string radiusInput;
- std::string centerXInput;
- std::string centerYInput;
- std::string angleInput;
- std::string angularSpeedInput;
- std::string angularSpeedIncrement;
- std::string isClockwiseFlag;
+ enum class EditingField {Radius, CenterX, CenterY, Angle, AngularSpeed, AngularSpeedIncrement, IsClockwise, None };
 
  // Struct to hold text field information
  struct TextField
@@ -64,7 +55,23 @@ private:
   sf::FloatRect bounds;
  };
 
- std::vector<TextField> textFields;
+ // Struct to hold input field information
+ struct InputField
+ {
+  std::string label;
+  std::string input;
+  EditingField field;
+  bool isNumeric;
+  int precision;
+  std::function<void(const std::string&)> setter;
+  std::function<std::string()> getter;
+ };
+
+ EditingField currentEditingField; ///< Currently selected field for editing.
+ InputField* currentInputField;         ///< Pointer to the current text input.
+
+ std::vector<InputField> textInputs; ///< Vector of text input strings.
+ std::vector<TextField> textFields;  ///< Vector of text fields for editing.
 
  // Configuration window rectangle
  sf::RectangleShape configWindowRect;

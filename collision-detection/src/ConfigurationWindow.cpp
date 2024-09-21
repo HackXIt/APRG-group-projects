@@ -3,21 +3,113 @@
 //
 
 #include "ConfigurationWindow.hpp"
+
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
 
 ConfigurationWindow::ConfigurationWindow(sf::Font& font, CircularMotion& circularMotion)
-    : circularMotion(circularMotion), font(font), currentEditingField(EditingField::None)
+    : circularMotion(circularMotion), font(font), currentEditingField(EditingField::None), currentInputField(nullptr)
 {
-    // Initialize input strings with current values
-    radiusInput = std::to_string(circularMotion.getRadius());
-    centerXInput = std::to_string(circularMotion.getCenter().x);
-    centerYInput = std::to_string(circularMotion.getCenter().y);
-    angleInput = std::to_string(circularMotion.getAngle());
-    angularSpeedInput = std::to_string(circularMotion.getAngularSpeed());
-    angularSpeedIncrement = std::to_string(circularMotion.getAngularSpeedIncrement());
-    isClockwiseFlag = circularMotion.IsClockwise() ? "true" : "false";
+    // !! (KEEP THE ORDER THE SAME AS IN THE EditingField ENUM) !!
+    // Initialize input fields with default values
+    // NOTE : The setter and getter are lambda functions handling the conversion for the fields (e.g., string to float and back)
+#pragma region InputFields
+    textInputs = {
+      { "Radius: ",
+          std::to_string(circularMotion.getRadius()),
+          EditingField::Radius,
+          true,
+          2,
+          [&circularMotion](const std::string& val) {
+              circularMotion.setRadius(std::stof(val));
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getRadius(), 2);
+          }
+      },
+      { "Center X: ",
+          std::to_string(circularMotion.getCenter().x),
+          EditingField::CenterX,
+          true,
+          0,
+          [&circularMotion](const std::string& val) {
+              sf::Vector2f center = circularMotion.getCenter();
+              center.x = std::stof(val);
+              circularMotion.setCenter(center);
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getCenter().x, 0);
+          }
+      },
+      { "Center Y: ",
+          std::to_string(circularMotion.getCenter().y),
+          EditingField::CenterY,
+          true,
+          0,
+          [&circularMotion](const std::string& val) {
+              sf::Vector2f center = circularMotion.getCenter();
+              center.y = std::stof(val);
+              circularMotion.setCenter(center);
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getCenter().y, 0);
+          }
+      },
+      { "Angle: ",
+          std::to_string(circularMotion.getAngle()),
+          EditingField::Angle,
+          true,
+          2,
+          [&circularMotion](const std::string& val) {
+              circularMotion.setAngle(std::stof(val));
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getAngle(), 2);
+          }
+      },
+      { "Angular Speed: ",
+          std::to_string(circularMotion.getAngularSpeed()),
+          EditingField::AngularSpeed,
+          true,
+          5,
+          [&circularMotion](const std::string& val) {
+              circularMotion.setAngularSpeed(std::stof(val));
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getAngularSpeed(), 5);
+          }
+      },
+      { "Speed Increment: ",
+          std::to_string(circularMotion.getAngularSpeedIncrement()),
+          EditingField::AngularSpeedIncrement,
+          true,
+          5,
+          [&circularMotion](const std::string& val) {
+              circularMotion.setAngularSpeedIncrement(std::stof(val));
+          },
+          [this, &circularMotion]() {
+              return formatFloat(circularMotion.getAngularSpeedIncrement(), 5);
+          }
+      },
+      { "Clockwise: ",
+          circularMotion.IsClockwise() ? "true" : "false",
+          EditingField::IsClockwise,
+          false,
+          -1,
+          [&circularMotion](const std::string& val) {
+              if (val == "true")
+                  circularMotion.setClockwise();
+              else if (val == "false")
+                  circularMotion.setCounterClockwise();
+          },
+          [&circularMotion]() {
+              return circularMotion.IsClockwise() ? "true" : "false";
+          }
+      }
+    };
+#pragma endregion
 
     // Initialize text fields
     textFields = {
@@ -52,71 +144,27 @@ void ConfigurationWindow::handleEvent(const sf::Event& event, const sf::RenderWi
             if (textField.bounds.contains(mousePos))
             {
                 currentEditingField = textField.field;
+                currentInputField = &textInputs[static_cast<int>(currentEditingField)];
+                currentInputField->input.clear(); // Start with an empty string
                 break;
             }
         }
     }
 
     // Handle keyboard input for editing properties
-    if (event.type == sf::Event::TextEntered)
+    if (event.type == sf::Event::TextEntered && currentInputField != nullptr)
     {
         if (event.text.unicode == '\b') // Handle backspace
         {
-            switch (currentEditingField)
-            {
-            case EditingField::Radius:
-                if (!radiusInput.empty())
-                    radiusInput.pop_back();
-                break;
-            case EditingField::CenterX:
-                if (!centerXInput.empty())
-                    centerXInput.pop_back();
-                break;
-            case EditingField::CenterY:
-                if (!centerYInput.empty())
-                    centerYInput.pop_back();
-                break;
-            case EditingField::Angle:
-                if (!angleInput.empty())
-                    angleInput.pop_back();
-                break;
-            case EditingField::AngularSpeed:
-                if (!angularSpeedInput.empty())
-                    angularSpeedInput.pop_back();
-                break;
-            case EditingField::AngularSpeedIncrement:
-                if (!angularSpeedIncrement.empty())
-                    angularSpeedIncrement.pop_back();
-            default:
-                break;
-            }
+            if (!currentInputField->input.empty())
+                currentInputField->input.pop_back();
         }
-        else if ((event.text.unicode >= '0' && event.text.unicode <= '9') ||
-                    event.text.unicode == '.') // Handle character input
+        else if (((event.text.unicode >= '0' && event.text.unicode <= '9') ||
+                    event.text.unicode == '.')) // Handle character input
         {
             char enteredChar = static_cast<char>(event.text.unicode);
-            switch (currentEditingField)
-            {
-            case EditingField::Radius:
-                radiusInput += enteredChar;
-                break;
-            case EditingField::CenterX:
-                centerXInput += enteredChar;
-                break;
-            case EditingField::CenterY:
-                centerYInput += enteredChar;
-                break;
-            case EditingField::Angle:
-                angleInput += enteredChar;
-                break;
-            case EditingField::AngularSpeed:
-                angularSpeedInput += enteredChar;
-                break;
-            case EditingField::AngularSpeedIncrement:
-                angularSpeedIncrement += enteredChar;
-            default:
-                break;
-            }
+            currentInputField->input += enteredChar;
+            textInputs[static_cast<int>(currentEditingField)].input = currentInputField->input;
         }
     }
 
@@ -125,6 +173,10 @@ void ConfigurationWindow::handleEvent(const sf::Event& event, const sf::RenderWi
     {
         switch (event.key.code)
         {
+        case sf::Keyboard::Escape: // Cancel editing
+            currentEditingField = EditingField::None;
+            currentInputField = nullptr;
+            break;
         case sf::Keyboard::Enter: // Apply changes when pressing Enter
             applyChanges();
             break;
@@ -141,6 +193,22 @@ void ConfigurationWindow::handleEvent(const sf::Event& event, const sf::RenderWi
             if (circularMotion.getAngularSpeed() > circularMotion.getAngularSpeedIncrement())
                 circularMotion.setAngularSpeed(circularMotion.getAngularSpeed() - circularMotion.getAngularSpeedIncrement());
             break;
+        case sf::Keyboard::W:   // Move up in the Y-axis
+            if ((circularMotion.getCenter().y - circularMotion.getRadius()) > 0)
+                circularMotion.setCenter(circularMotion.getCenter() + sf::Vector2f(0.f, -5.f));
+            break;
+        case sf::Keyboard::S:   // Move down in the Y-axis
+            if ((circularMotion.getCenter().y + circularMotion.getRadius()) < window.getSize().y)
+                circularMotion.setCenter(circularMotion.getCenter() + sf::Vector2f(0.f, 5.f));
+            break;
+        case sf::Keyboard::A:   // Move left in the X-axis
+            if ((circularMotion.getCenter().x - circularMotion.getRadius()) > 0)
+                circularMotion.setCenter(circularMotion.getCenter() + sf::Vector2f(-5.f, 0.f));
+            break;
+        case sf::Keyboard::D:   // Move right in the X-axis
+            if ((circularMotion.getCenter().x + circularMotion.getRadius()) < window.getSize().x)
+                circularMotion.setCenter(circularMotion.getCenter() + sf::Vector2f(5.f, 0.f));
+            break;
         default:
             break;
         }
@@ -151,73 +219,19 @@ void ConfigurationWindow::applyChanges()
 {
     try
     {
-        switch (currentEditingField)
+        if (currentInputField == nullptr)
         {
-        case EditingField::Radius:
-            if (!radiusInput.empty())
-            {
-                circularMotion.setRadius(std::stof(radiusInput));
-                // Update the input string to reflect formatted value
-                radiusInput = formatFloat(circularMotion.getRadius());
-            }
-            currentEditingField = EditingField::None;
-            break;
-        case EditingField::CenterX:
-            {
-                if (!centerXInput.empty())
-                {
-                    sf::Vector2f center = circularMotion.getCenter();
-                    center.x = std::stof(centerXInput);
-                    circularMotion.setCenter(center);
-                    centerXInput = formatFloat(center.x);
-                }
-                currentEditingField = EditingField::None;
-                break;
-            }
-        case EditingField::CenterY:
-            {
-                if (!centerYInput.empty())
-                {
-                    sf::Vector2f center = circularMotion.getCenter();
-                    center.y = std::stof(centerYInput);
-                    circularMotion.setCenter(center);
-                    centerYInput = formatFloat(center.y);
-                }
-                currentEditingField = EditingField::None;
-                break;
-            }
-        case EditingField::Angle:
-            if (!angleInput.empty())
-            {
-                circularMotion.setAngle(std::stof(angleInput));
-                angleInput = formatFloat(circularMotion.getAngle());
-            }
-            currentEditingField = EditingField::None;
-            break;
-        case EditingField::AngularSpeed:
-            if (!angularSpeedInput.empty())
-            {
-                circularMotion.setAngularSpeed(std::stof(angularSpeedInput));
-                angularSpeedInput = formatFloat(circularMotion.getAngularSpeed(), 5);
-            }
-            currentEditingField = EditingField::None;
-            break;
-        case EditingField::AngularSpeedIncrement:
-            if (!angularSpeedIncrement.empty())
-            {
-                circularMotion.setAngularSpeedIncrement(std::stof(angularSpeedIncrement));
-                angularSpeedIncrement = formatFloat(circularMotion.getAngularSpeedIncrement(), 5);
-            }
-            currentEditingField = EditingField::None;
-            break;
-        case EditingField::IsClockwise:
-            circularMotion.toggleDirection();
-            isClockwiseFlag = circularMotion.IsClockwise() ? "true" : "false";
-            currentEditingField = EditingField::None;
-            break;
-        default:
-            break;
+            std::cerr << "No input field selected\n";
+            return;
         }
+        if (currentInputField->input.empty())
+        {
+            std::cerr << "Input is empty\n";
+            return;
+        }
+        currentInputField->setter(currentInputField->input);
+        currentEditingField = EditingField::None;
+        currentInputField = nullptr;
     }
     catch (const std::exception& e)
     {
@@ -228,26 +242,12 @@ void ConfigurationWindow::applyChanges()
 void ConfigurationWindow::draw(sf::RenderWindow& window)
 {
     // Update the input strings if not currently editing
-    if (currentEditingField != EditingField::Radius)
-        radiusInput = formatFloat(circularMotion.getRadius());
-
-    if (currentEditingField != EditingField::CenterX)
-        centerXInput = formatFloat(circularMotion.getCenter().x);
-
-    if (currentEditingField != EditingField::CenterY)
-        centerYInput = formatFloat(circularMotion.getCenter().y);
-
-    if (currentEditingField != EditingField::Angle)
-        angleInput = formatFloat(circularMotion.getAngle(), 5);
-
-    if (currentEditingField != EditingField::AngularSpeed)
-        angularSpeedInput = formatFloat(circularMotion.getAngularSpeed(), 5);
-
-    if (currentEditingField != EditingField::AngularSpeedIncrement)
-        angularSpeedIncrement = formatFloat(circularMotion.getAngularSpeedIncrement(), 5);
-
-    if (currentEditingField != EditingField::IsClockwise)
-        isClockwiseFlag = circularMotion.IsClockwise() ? "true" : "false";
+    for (auto& input : textInputs)
+    {
+        if(input.field == currentEditingField)
+            continue;
+        input.input = input.getter();
+    }
 
     // Update text positions and bounds
     updateTextPositions();
@@ -256,9 +256,13 @@ void ConfigurationWindow::draw(sf::RenderWindow& window)
     for (TextField& textField : textFields)
     {
         if (textField.field == currentEditingField)
+        {
             textField.text.setFillColor(sf::Color::Red);
+        }
         else
+        {
             textField.text.setFillColor(sf::Color::Black);
+        }
     }
 
     // Draw the configuration window rectangle
@@ -279,25 +283,25 @@ void ConfigurationWindow::updateTextPositions()
         switch (textField.field)
         {
         case EditingField::Radius:
-            textField.text.setString("Radius: " + radiusInput);
+            textField.text.setString("Radius: " + textInputs[static_cast<int>(EditingField::Radius)].input);
             break;
         case EditingField::CenterX:
-            textField.text.setString("Center X: " + centerXInput);
+            textField.text.setString("Center X: " + textInputs[static_cast<int>(EditingField::CenterX)].input);
             break;
         case EditingField::CenterY:
-            textField.text.setString("Center Y: " + centerYInput);
+            textField.text.setString("Center Y: " + textInputs[static_cast<int>(EditingField::CenterY)].input);
             break;
         case EditingField::Angle:
-            textField.text.setString("Angle: " + angleInput);
+            textField.text.setString("Angle: " + textInputs[static_cast<int>(EditingField::Angle)].input);
             break;
         case EditingField::AngularSpeed:
-            textField.text.setString("Angular Speed: " + angularSpeedInput);
+            textField.text.setString("Angular Speed: " + textInputs[static_cast<int>(EditingField::AngularSpeed)].input);
             break;
         case EditingField::AngularSpeedIncrement:
-            textField.text.setString("Speed Increment: " + angularSpeedIncrement);
+            textField.text.setString("Speed Increment: " + textInputs[static_cast<int>(EditingField::AngularSpeedIncrement)].input);
             break;
         case EditingField::IsClockwise:
-            textField.text.setString("Clockwise: " + isClockwiseFlag);
+            textField.text.setString("Clockwise: " + textInputs[static_cast<int>(EditingField::IsClockwise)].input);
             break;
         default:
             break;
