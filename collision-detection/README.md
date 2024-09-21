@@ -34,8 +34,22 @@ We try to use external libraries as much as possible, to minimize development wo
 
 - [x] Projekt mit CMake konfigurieren (... libSDL2 oder SFML hinzufügen, etc...)
 => sollte bis morgen 16.09 ready sein (Leeres Fenster mit Beispiel-Library-Code)
-- [ ] Klassen zur Anwendung der Methode einrichten (Plane/Triangle/Sphere/AABB)
-=> In library doku zu recherchieren (jeder): Bis Freitag 20.09 
+- [x] Visualisierung mit Grafik-Library (SFML)
+  - [x] Fenster erstellen
+  - [x] Property-Fenster zum editieren der Shapes
+  - [x] Keyboard-Events:
+    - [x] WASD (Bewegung)
+    - [x] UP/DOWN (Rotationsgeschwindigkeit)
+    - [x] LEFT/RIGHT (Clockwise/Anti-Clockwise)
+    - [x] Esc (Cancel)
+    - [x] Enter (Confirm)
+    - [x] Mausklick auf Property (Property editieren)
+- [ ] Klassen zur Anwendung der Methode einrichten
+  => In library doku zu recherchieren (jeder): Bis Freitag 20.09
+  - [ ] Plane
+  - [ ] Triangle
+  - [ ] Sphere
+  - [ ] AABB 
 - [ ] Algorithmus zur Kollisionserkennung implementieren (Bis Samstag 21.09) 
   - [ ] Interval Halfing Method
   - [ ] Moving sphere to Plane/Triangle/Sphere/AABB
