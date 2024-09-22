@@ -16,6 +16,12 @@ const int DEATH_SPIKES = 20; // i.e. point count
 const float MAXIMUM_DAMAGE = 50.0f; // i.e. radius
 const float PENETRATION_BONUS = 10.0f; // i.e. spike length
 
+// Motion switch
+// #define CIRCULAR_MOTION
+#ifndef CIRCULAR_MOTION
+#define LINEAR_MOTION
+#endif
+
 int main()
 {
     // Create a window with SFML
@@ -85,9 +91,6 @@ int main()
     collision_detection::Triangle triangleAABB(&triangle);
     collision_detection::Plane linePlane(line);
 
-    // Create a circular motion object for the wrecking ball
-    CircularMotion circularMotion(wreckingBall);
-
     // Load a font for text
     sf::Font font;
     if (!font.loadFromFile("../resources/FiraCodeNerdFontMono-Retina.ttf"))
@@ -96,8 +99,17 @@ int main()
         return 1;
     }
 
+    // Create a motion object for the wrecking ball and a ConfigurationWindow for the motion
+#ifdef CIRCULAR_MOTION
+    CircularMotion circularMotion(wreckingBall);
+    ConfigurationWindow configWindow(font, &circularMotion, nullptr);
+#endif
+#ifdef LINEAR_MOTION
+    LinearMotion linearMotion(wreckingBall);
+    ConfigurationWindow configWindow(font, nullptr, &linearMotion);
+#endif
     // Create ConfigurationWindow object
-    ConfigurationWindow configWindow(font, circularMotion);
+
 
     // Create information windows for live data on objects
     InformationWindow infoWindow(font);
@@ -120,13 +132,27 @@ int main()
 
             // Pass events to configuration window
             configWindow.handleEvent(event, window);
+#ifdef LINEAR_MOTION
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                // Get mouse position
+                sf::Vector2i mousePosWindow = sf::Mouse::getPosition(window);
+                sf::Vector2f mousePos = window.mapPixelToCoords(mousePosWindow);
+                linearMotion.setTarget(mousePos);
+            }
+#endif
         }
 
         // Clear the window with a black color
         window.clear(sf::Color::Black);
 
         // Update the circular motion
+#ifdef CIRCULAR_MOTION
         circularMotion.update();
+#endif
+#ifdef LINEAR_MOTION
+        linearMotion.update();
+#endif
 
         // Update the bounding volume to match the new shape position
         wreckingBallSphere.calculateFromShape();

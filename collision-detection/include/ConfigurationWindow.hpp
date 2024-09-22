@@ -9,6 +9,7 @@
 #include <functional>
 #include <SFML/Graphics.hpp>
 #include "CircularMotion.hpp"
+#include "LinearMotion.hpp"
 
 /**
  * @class ConfigurationWindow
@@ -24,8 +25,9 @@ public:
   * @brief Constructor for ConfigurationWindow.
   * @param font Reference to the SFML font used for rendering text.
   * @param circularMotion Reference to the CircularMotion object to configure.
+  * @param linearMotion Reference to the LinearMotion object to configure.
   */
- ConfigurationWindow(sf::Font& font, CircularMotion& circularMotion);
+ ConfigurationWindow(sf::Font& font, CircularMotion* circularMotion = nullptr, LinearMotion* linearMotion = nullptr);
 
  /**
   * @brief Handles SFML events related to the configuration window.
@@ -41,17 +43,20 @@ public:
  void draw(sf::RenderWindow& window);
 
 private:
- CircularMotion& circularMotion;   ///< Reference to the CircularMotion object.
+ CircularMotion* circularMotion;   ///< Reference to the CircularMotion object.
+ LinearMotion* linearMotion;       ///< Reference to the LinearMotion object.
  sf::Font& font;                   ///< Reference to the SFML font for text rendering.
 
  // Enum for editing fields
- enum class EditingField {Radius, CenterX, CenterY, Angle, AngularSpeed, AngularSpeedIncrement, IsClockwise, None };
-
+ enum class EditingField {Radius, CenterX, CenterY, Angle, AngularSpeed, AngularSpeedIncrement, IsClockwise, Velocity, TargetX, TargetY, None };
+ enum class EditingFieldCircular {Radius, CenterX, CenterY, Angle, AngularSpeed, AngularSpeedIncrement, IsClockwise, None };
+ enum class EditingFieldLinear {Velocity, TargetX, TargetY, None };
  // Struct to hold text field information
  struct TextField
  {
   sf::Text text;
   EditingField field;
+  int fieldIndex; // Workaround for handling different input field categories (Circular, Linear) and their indices
   sf::FloatRect bounds;
  };
 
