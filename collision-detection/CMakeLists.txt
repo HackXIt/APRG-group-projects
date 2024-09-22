@@ -16,10 +16,10 @@ FetchContent_MakeAvailable(SFML)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
+FILE(GLOB SOURCES src/*.cpp)
+
 # Add the executable and link SFML
-add_executable(collision-detection src/main.cpp
-        src/CircularMotion.cpp
-        src/ConfigurationWindow.cpp)
+add_executable(collision-detection ${SOURCES})
 
 # Copy the font file to the build directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
