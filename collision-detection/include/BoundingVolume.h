@@ -11,7 +11,7 @@ namespace collision_detection {
 
 class BoundingVolume {
     // Virtual destructor for proper cleanup of derived classes
-    virtual ~BoundingVolume() {}
+    //virtual ~BoundingVolume() {}
 
     // Pure virtual function for intersection test with another bounding volume
     virtual bool intersects(const BoundingVolume& other) const = 0;
