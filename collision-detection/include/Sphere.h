@@ -16,11 +16,8 @@ namespace collision_detection {
         ei::Disc2D disc;
         sf::CircleShape debugShape;
 
-        Sphere()
+        Sphere(sf::Shape* shape) : BoundingVolume(shape), center(0.0f, 0.0f), radius(0.0f), disc(center, radius)
         {
-            center = ei::Vec2(0.0f, 0.0f);
-            radius = 0.0f;
-            disc = ei::Disc2D(center, radius);
             debugShape = sf::CircleShape(radius);
             debugShape.setOrigin(radius, radius);
             debugShape.setPosition(center.x, center.y);
@@ -30,9 +27,11 @@ namespace collision_detection {
             debugShape.setFillColor(sf::Color::Transparent);
         }
 
-        void calculateFromShape(const sf::Shape& shape) override;
+        void calculateFromShape() override;
         bool intersects(const BoundingVolume& other) const override;
         void draw(sf::RenderWindow& window) const override;
+
+        std::string toString() const override;
     };
 } // collision_detection
 

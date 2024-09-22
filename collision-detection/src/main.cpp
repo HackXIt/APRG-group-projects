@@ -8,6 +8,8 @@
 #include "Sphere.h"
 #include "Triangle.h"
 #include "AABB.h"
+#include "InformationWindow.hpp"
+#include "Plane.h"
 
 // (these constants are just joke variable names since the object is a wrecking ball)
 const int DEATH_SPIKES = 20; // i.e. point count
@@ -42,12 +44,9 @@ int main()
     wreckingBall.setPosition(windowCenter);
 
     // Create a bounding volume object for the wrecking ball
-    collision_detection::Sphere wreckingBallSphere = collision_detection::Sphere();
-    wreckingBallSphere.calculateFromShape(wreckingBall);
-    // collision_detection::Triangle wreckingBallTriangle = collision_detection::Triangle();
-    // wreckingBallTriangle.calculateFromShape(wreckingBall);
-    // collision_detection::AABB wreckingBallAABB = collision_detection::AABB();
-    // wreckingBallAABB.calculateFromShape(wreckingBall);
+    collision_detection::Sphere wreckingBallSphere = collision_detection::Sphere(&wreckingBall);
+    // collision_detection::Triangle wreckingBallTriangle = collision_detection::Triangle(wreckingBall);
+    // collision_detection::AABB wreckingBallAABB = collision_detection::AABB(wreckingBall);
 
     // Create multiple objects to collide with (Circle, Rectangle, Triangle - Walls of different shape)
     sf::CircleShape circle(50);
@@ -74,15 +73,17 @@ int main()
     triangle.setOrigin(50, 50);
     triangle.setPosition(windowCenter + sf::Vector2f(-200, 0));
 
+    sf::Vertex line[2];
+    line[0].position = sf::Vector2f(640, 352);
+    line[0].color = sf::Color::Yellow;
+    line[1].position = sf::Vector2f(740, 352);
+    line[1].color = sf::Color::Yellow;
+
     // Create Sphere bounding volumes for the other shapes
-    collision_detection::Sphere circleSphere;
-    circleSphere.calculateFromShape(circle);
-
-    collision_detection::Sphere rectangleSphere;
-    rectangleSphere.calculateFromShape(rectangle);
-
-    collision_detection::Sphere triangleSphere;
-    triangleSphere.calculateFromShape(triangle);
+    collision_detection::Sphere circleSphere(&circle);
+    collision_detection::AABB rectangleSphere(&rectangle);
+    collision_detection::Triangle triangleAABB(&triangle);
+    collision_detection::Plane linePlane(line);
 
     // Create a circular motion object for the wrecking ball
     CircularMotion circularMotion(wreckingBall);
@@ -97,6 +98,14 @@ int main()
 
     // Create ConfigurationWindow object
     ConfigurationWindow configWindow(font, circularMotion);
+
+    // Create information windows for live data on objects
+    InformationWindow infoWindow(font);
+    infoWindow.addTextField(&wreckingBall, &wreckingBallSphere, 0, -150);
+    infoWindow.addTextField(&circle, &circleSphere);
+    infoWindow.addTextField(&rectangle, &rectangleSphere);
+    infoWindow.addTextField(&triangle, &triangleAABB);
+    infoWindow.addTextField(line[0].position, &linePlane);
 
     // Main loop
     while (window.isOpen())
@@ -119,65 +128,101 @@ int main()
         // Update the circular motion
         circularMotion.update();
 
-        // Draw the shape
-        window.draw(wreckingBall);
-
-        // Draw the collidable objects
-        window.draw(circle);
-        window.draw(rectangle);
-        window.draw(triangle);
-
         // Update the bounding volume to match the new shape position
-        wreckingBallSphere.calculateFromShape(wreckingBall);
+        wreckingBallSphere.calculateFromShape();
         // wreckingBallTriangle.calculateFromShape(wreckingBall);
         // wreckingBallAABB.calculateFromShape(wreckingBall);
 
-        // NOTE The other shapes are static, so no need to update their bounding volumes
+        // NOTE The other shapes are static, but we update them anyhow
+        circleSphere.calculateFromShape();
+        rectangleSphere.calculateFromShape();
+        triangleAABB.calculateFromShape();
+        linePlane.calculateFromShape();
+
+        bool noIntersection = true;
 
         // Perform intersection tests
         if (wreckingBallSphere.intersects(circleSphere))
         {
             // Collision detected with circle
-            circle.setFillColor(sf::Color::Green);
+            circleSphere.isColliding = true;
+            noIntersection = false;
         }
         else
         {
             // No collision
-            circle.setFillColor(sf::Color::Red);
+            circleSphere.isColliding = false;
         }
 
         if (wreckingBallSphere.intersects(rectangleSphere))
         {
             // Collision detected with rectangle
-            rectangle.setFillColor(sf::Color::Green);
+            rectangleSphere.isColliding = true;
+            noIntersection = false;
         }
         else
         {
             // No collision
-            rectangle.setFillColor(sf::Color::Red);
+            rectangleSphere.isColliding = false;
         }
 
-        if (wreckingBallSphere.intersects(triangleSphere))
+        if (wreckingBallSphere.intersects(triangleAABB))
         {
             // Collision detected with triangle
-            triangle.setFillColor(sf::Color::Green);
+            triangleAABB.isColliding = true;
+            noIntersection = false;
         }
         else
         {
             // No collision
-            triangle.setFillColor(sf::Color::Red);
+            triangleAABB.isColliding = false;
         }
+
+        if (wreckingBallSphere.intersects(linePlane))
+        {
+            // Collision detected with plane
+            linePlane.isColliding = true;
+            noIntersection = false;
+        }
+        else
+        {
+            // No collision
+            linePlane.isColliding = false;
+        }
+
+        if (noIntersection)
+        {
+            wreckingBallSphere.isColliding = false;
+        }
+        else
+        {
+            wreckingBallSphere.isColliding = true;
+        }
+
+        // Shapes are drawn by their bounding volumes
+
+        // Draw the shape
+        // window.draw(wreckingBall);
+
+        // Draw the collidable objects
+        // window.draw(circle);
+        // window.draw(rectangle);
+        // window.draw(triangle);
 
         // Draw the bounding volume (debugging)
         wreckingBallSphere.draw(window);
         // wreckingBallTriangle.draw(window);
         // wreckingBallAABB.draw(window);
-        triangleSphere.draw(window);
+        triangleAABB.draw(window);
         circleSphere.draw(window);
         rectangleSphere.draw(window);
+        linePlane.draw(window);
 
         // Draw the configuration window
         configWindow.draw(window);
+
+        // Draw the information window
+        infoWindow.draw(window);
 
         // Display the contents of the window
         window.display();

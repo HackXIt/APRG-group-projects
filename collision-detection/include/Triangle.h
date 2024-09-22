@@ -16,7 +16,7 @@ namespace collision_detection {
         sf::Vector2f points[3];
         sf::ConvexShape debugShape;
 
-        Triangle()
+        Triangle(sf::Shape* shape) : BoundingVolume(shape)
         {
             points[0] = sf::Vector2f(0.0f, 0.0f);
             points[1] = sf::Vector2f(0.0f, 0.0f);
@@ -31,9 +31,10 @@ namespace collision_detection {
             debugShape.setOutlineThickness(1.0f);
         }
 
-        void calculateFromShape(const sf::Shape& shape) override;
+        void calculateFromShape() override;
         bool intersects(const BoundingVolume& other) const override;
         void draw(sf::RenderWindow& window) const override;
+        std::string toString() const override;
     };
 
 } // collision_detection

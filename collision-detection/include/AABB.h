@@ -15,7 +15,7 @@ namespace collision_detection {
         ei::Rect2D bounds;
         sf::RectangleShape debugShape;
 
-        AABB()
+        AABB(sf::Shape* shape) : BoundingVolume(shape)
         {
             bounds = ei::Rect2D(ei::Vec2(0.0f, 0.0f), ei::Vec2(0.0f, 0.0f));
             debugShape = sf::RectangleShape(sf::Vector2f(bounds.min.x, bounds.max.y));
@@ -26,8 +26,10 @@ namespace collision_detection {
         }
 
         bool intersects(const BoundingVolume& other) const override;
-        void calculateFromShape(const sf::Shape& shape) override;
+        void calculateFromShape() override;
         void draw(sf::RenderWindow& window) const override;
+
+        std::string toString() const override;
     };
 
 } // collision_detection

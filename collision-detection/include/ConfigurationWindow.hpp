@@ -82,14 +82,6 @@ private:
  void applyChanges();
 
  /**
-     * @brief Formats floating-point numbers to a string with two decimal places.
-     * @param value The floating-point number to format.
-     * @param precision The number of decimal places to include (default is 2).
-     * @return A string representing the formatted number.
-     */
- static std::string formatFloat(float value, int precision = 2);
-
- /**
   * @brief Updates the positions and bounds of the text fields.
   */
  void updateTextPositions();

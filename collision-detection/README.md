@@ -44,16 +44,20 @@ We try to use external libraries as much as possible, to minimize development wo
     - [x] Esc (Cancel)
     - [x] Enter (Confirm)
     - [x] Mausklick auf Property (Property editieren)
-- [ ] Klassen zur Anwendung der Methode einrichten
+- [x] Klassen zur Anwendung der Methode einrichten
   => In library doku zu recherchieren (jeder): Bis Freitag 20.09
-  - [ ] Plane
-  - [ ] Triangle
-  - [ ] Sphere
-  - [ ] AABB 
+  - [x] Plane
+  - [x] Triangle
+  - [x] Sphere
+  - [x] AABB 
 - [ ] Algorithmus zur Kollisionserkennung implementieren (Bis Samstag 21.09) 
   - [ ] Interval Halfing Method
-  - [ ] Moving sphere to Plane/Triangle/Sphere/AABB
-  - [ ] Window und Renderer für Visualisierung der Collision (DebugLines für Detection)
+  - [ ] Moving sphere to:
+    - [ ] Plane (This is currently only testing the collision with the endpoints, not the whole plane)
+    - [ ] Triangle (not implemented)
+    - [X] Sphere
+    - [X] AABB
+  - [x] Window und Renderer für Visualisierung der Collision (DebugLines für Detection)
 - [ ] Live-Demo => Schleife der 4 Kollisionen (Sphere to Plane/Triangle/Sphere/AABB) => Bis Sonntag 22.09
 - [ ] Dokumentation => Bis Dienstag vor Abgabe 24.09
   - [ ] Testen der Kollisionserkennung

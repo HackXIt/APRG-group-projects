@@ -330,10 +330,3 @@ void ConfigurationWindow::updateTextPositions()
     configWindowRect.setSize(sf::Vector2f(maxWidth + 20.f, yOffset - padding));
     configWindowRect.setFillColor(sf::Color::Cyan);
 }
-
-std::string ConfigurationWindow::formatFloat(float value, int precision)
-{
-    std::ostringstream oss;
-    oss << std::fixed << std::setprecision(precision) << value;
-    return oss.str();
-}
