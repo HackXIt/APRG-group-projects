@@ -4,6 +4,11 @@
 
 #include "Triangle.h"
 
+#include <ei/2dintersection.hpp>
+
+#include "AABB.h"
+#include "Sphere.h"
+
 namespace collision_detection {
     void Triangle::calculateFromShape(const sf::Shape& shape) {
         // Assume the shape has at least 3 points
@@ -17,8 +22,8 @@ namespace collision_detection {
     }
 
     bool Triangle::intersects(const BoundingVolume& other) const {
-        // Implement triangle intersection tests
-        return false; // Placeholder
+        // No intersection test for triangle (not implemented)
+        return false;
     }
 
     void Triangle::draw(sf::RenderWindow& window) const {

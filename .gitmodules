@@ -1,0 +1,3 @@
+[submodule "collision-detection/epsilon"]
+	path = collision-detection/epsilon
+	url = git@github.com:Jojendersie/Epsilon-Intersection.git

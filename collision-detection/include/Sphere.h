@@ -5,20 +5,25 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 #include "BoundingVolume.h"
+#include "ei/2dtypes.hpp"
 
 namespace collision_detection {
 
     class Sphere : public BoundingVolume {
     public:
-        sf::Vector2f center;
+        ei::Vec2 center;
         float radius;
+        ei::Disc2D disc;
         sf::CircleShape debugShape;
 
-        Sphere() : center(0, 0), radius(0)
+        Sphere()
         {
+            center = ei::Vec2(0.0f, 0.0f);
+            radius = 0.0f;
+            disc = ei::Disc2D(center, radius);
             debugShape = sf::CircleShape(radius);
             debugShape.setOrigin(radius, radius);
-            debugShape.setPosition(center);
+            debugShape.setPosition(center.x, center.y);
             debugShape.setFillColor(sf::Color::Transparent);
             debugShape.setOutlineColor(sf::Color::Yellow);
             debugShape.setOutlineThickness(1.0f);
@@ -28,7 +33,6 @@ namespace collision_detection {
         void calculateFromShape(const sf::Shape& shape) override;
         bool intersects(const BoundingVolume& other) const override;
         void draw(sf::RenderWindow& window) const override;
-
     };
 } // collision_detection
 
