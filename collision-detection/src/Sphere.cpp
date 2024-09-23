@@ -13,6 +13,45 @@
 #include "Triangle.h"
 
 namespace collision_detection {
+    bool testMovingSphereSphere(
+        const collision_detection::Sphere& s0,
+        const ei::Vec2& d,
+        float t0,
+        float t1,
+        const collision_detection::Sphere& s1,
+        float& collisionTime)
+    {
+        // Compute sphere (circle) bounding motion of s0 during time interval from t0 to t1
+        collision_detection::Sphere b;
+        float mid = (t0 + t1) * 0.5f;
+
+        // Compute the center of the bounding sphere at time 'mid'
+        ei::Vec2 s0_c = s0.disc.center;
+        ei::Vec2 b_c = s0_c + d * mid;
+        b.disc.center = b_c;
+
+        // Compute the radius of the bounding sphere
+        float movementDistance = (mid - t0) * sqrt(d.x * d.x + d.y * d.y);
+        b.disc.radius = movementDistance + s0.disc.radius;
+
+        // If bounding sphere not overlapping s1, then no collision in this interval
+        if (!ei::intersects(b.disc, s1.disc))
+            return false;
+
+        // Cannot rule collision out: recurse for more accurate testing
+        const float INTERVAL_EPSILON = 0.001f; // Adjust for desired precision
+        if (t1 - t0 < INTERVAL_EPSILON) {
+            collisionTime = t0;
+            return true;
+        }
+
+        // Recursively test first half of interval; return collision if detected
+        if (testMovingSphereSphere(s0, d, t0, mid, s1, collisionTime))
+            return true;
+
+        // Recursively test second half of interval
+        return testMovingSphereSphere(s0, d, mid, t1, s1, collisionTime);
+    }
 
     void Sphere::calculateFromShape()
     {
@@ -34,7 +73,9 @@ namespace collision_detection {
         const Sphere* otherSphere = dynamic_cast<const Sphere*>(&other);
         if (otherSphere)
         {
-            return ei::intersects(disc, otherSphere->disc);
+            float t0 = 0.0f;
+            // return ei::intersects(disc, otherSphere->disc);
+            return testMovingSphereSphere(*this, {0.0f, 0.0f}, 0.0f, 1.0f, *otherSphere, t0);
         }
         const AABB* otherAABB = dynamic_cast<const AABB*>(&other);
         if (otherAABB)

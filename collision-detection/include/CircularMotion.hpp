@@ -6,7 +6,9 @@
 #define CIRCULARMOTION_H
 #include "SFML/Graphics/Shape.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "ei/2dtypes.hpp"
 #include "app.h"
+#include "BoundingVolume.h"
 
 constexpr float CIRCULARMOTION_RADIUS_DEFAULT = 150.0f; ///< Default radius of the circular path.
 const sf::Vector2f CIRCULARMOTION_CENTER_DEFAULT = {WINDOW_DEFAULT_WIDTH / 2.f, WINDOW_DEFAULT_HEIGHT / 2.f}; ///< Default center of the circular path.
@@ -47,6 +49,20 @@ class CircularMotion {
   * @brief Updates the position of the shape to move it along the circular path.
   */
  void update();
+
+ /**
+  * @brief Method to get position at time t without altering current state
+  * @param t Time value to get position at.
+  */
+ sf::Vector2f getPositionAtTime(float t) const;
+
+ /**
+  * @brief Method to get position at time t without altering current state
+  * @param t Time value to get position at.
+  */
+ ei::Vec2 getPositionAtTimeEi(float t) const;
+
+ float findCollisionTime(float t0, float t1, float tolerance, collision_detection::BoundingVolume& movingObject, const collision_detection::BoundingVolume& staticObject) const;
 
  // Getters and setters for the properties
  void setRadius(float r);

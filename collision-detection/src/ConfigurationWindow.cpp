@@ -238,33 +238,48 @@ void ConfigurationWindow::handleEvent(const sf::Event& event, const sf::RenderWi
             applyChanges();
             break;
         case sf::Keyboard::Left:    // Change direction of rotation to counter-clockwise
-            circularMotion->setCounterClockwise();
+            if(circularMotion != nullptr)
+                circularMotion->setCounterClockwise();
             break;
         case sf::Keyboard::Right:   // Change direction of rotation to clockwise
-            circularMotion->setClockwise();
+            if(circularMotion != nullptr)
+                circularMotion->setClockwise();
             break;
         case sf::Keyboard::Up:    // Increase angular speed
-            circularMotion->setAngularSpeed(circularMotion->getAngularSpeed() + circularMotion->getAngularSpeedIncrement());
+            if(circularMotion != nullptr)
+                circularMotion->setAngularSpeed(circularMotion->getAngularSpeed() + circularMotion->getAngularSpeedIncrement());
+            if(linearMotion != nullptr)
+                linearMotion->setVelocity(linearMotion->getVelocity() + 0.01f);
             break;
         case sf::Keyboard::Down:    // Decrease angular speed (minimum 0.001f)
-            if (circularMotion->getAngularSpeed() > circularMotion->getAngularSpeedIncrement())
+            if (circularMotion != nullptr && circularMotion->getAngularSpeed() > circularMotion->getAngularSpeedIncrement())
                 circularMotion->setAngularSpeed(circularMotion->getAngularSpeed() - circularMotion->getAngularSpeedIncrement());
+            if (linearMotion != nullptr && linearMotion->getVelocity() > 0)
+                linearMotion->setVelocity(linearMotion->getVelocity() - 0.01f);
             break;
         case sf::Keyboard::W:   // Move up in the Y-axis
-            if ((circularMotion->getCenter().y - circularMotion->getRadius()) > 0)
+            if (circularMotion != nullptr && (circularMotion->getCenter().y - circularMotion->getRadius()) > 0)
                 circularMotion->setCenter(circularMotion->getCenter() + sf::Vector2f(0.f, -5.f));
+            if (linearMotion != nullptr)
+                linearMotion->moveShape(0, -1.f);
             break;
         case sf::Keyboard::S:   // Move down in the Y-axis
-            if ((circularMotion->getCenter().y + circularMotion->getRadius()) < window.getSize().y)
+            if (circularMotion != nullptr && (circularMotion->getCenter().y + circularMotion->getRadius()) < window.getSize().y)
                 circularMotion->setCenter(circularMotion->getCenter() + sf::Vector2f(0.f, 5.f));
+            if (linearMotion != nullptr)
+                linearMotion->moveShape(0, 1.f);
             break;
         case sf::Keyboard::A:   // Move left in the X-axis
-            if ((circularMotion->getCenter().x - circularMotion->getRadius()) > 0)
+            if (circularMotion != nullptr && (circularMotion->getCenter().x - circularMotion->getRadius()) > 0)
                 circularMotion->setCenter(circularMotion->getCenter() + sf::Vector2f(-5.f, 0.f));
+            if (linearMotion != nullptr)
+                linearMotion->moveShape(-1.f, 0);
             break;
         case sf::Keyboard::D:   // Move right in the X-axis
-            if ((circularMotion->getCenter().x + circularMotion->getRadius()) < window.getSize().x)
+            if (circularMotion != nullptr && (circularMotion->getCenter().x + circularMotion->getRadius()) < window.getSize().x)
                 circularMotion->setCenter(circularMotion->getCenter() + sf::Vector2f(5.f, 0.f));
+            if (linearMotion != nullptr)
+                linearMotion->moveShape(1.f, 0);
             break;
         default:
             break;

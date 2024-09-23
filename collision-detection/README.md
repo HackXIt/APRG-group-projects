@@ -51,7 +51,7 @@ We try to use external libraries as much as possible, to minimize development wo
   - [x] Sphere
   - [x] AABB 
 - [ ] Algorithmus zur Kollisionserkennung implementieren (Bis Samstag 21.09) 
-  - [ ] Interval Halfing Method
+  - [x] Interval Halfing Method
   - [ ] Moving sphere to:
     - [ ] Plane (This is currently only testing the collision with the endpoints, not the whole plane)
     - [ ] Triangle (not implemented)

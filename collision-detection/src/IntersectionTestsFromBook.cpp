@@ -10,7 +10,8 @@
 
 // NOTE All functions have commented out calculations for Z-axis, since our showcase is 2D
 
-namespace collision_detection {
+namespace collision_detection_book
+{
 
     //calculates dot product of 2 vectors
     float dot( const sf::Vector2f& lhs, const sf::Vector2f& rhs ) noexcept

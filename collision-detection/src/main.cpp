@@ -119,6 +119,9 @@ int main()
     infoWindow.addTextField(&triangle, &triangleAABB);
     infoWindow.addTextField(line[0].position, &linePlane);
 
+    // Clock for measuring time
+    sf::Clock clock;
+
     // Main loop
     while (window.isOpen())
     {
@@ -146,12 +149,19 @@ int main()
         // Clear the window with a black color
         window.clear(sf::Color::Black);
 
+        float deltaTime = clock.restart().asSeconds(); // Use SFML clock to get deltaTime
+        float t0 = 0.0f;
+        float t1 = deltaTime;
+
         // Update the circular motion
 #ifdef CIRCULAR_MOTION
         circularMotion.update();
 #endif
 #ifdef LINEAR_MOTION
-        linearMotion.update();
+        // Get the velocity from LinearMotion
+        ei::Vec2 velocity = linearMotion.getVelocityVec2();
+        ei::Vec2 d = velocity; // Since deltaTime is t1 - t0 and t1 - t0 = deltaTime
+        // linearMotion.update();
 #endif
 
         // Update the bounding volume to match the new shape position
@@ -168,17 +178,35 @@ int main()
         bool noIntersection = true;
 
         // Perform intersection tests
-        if (wreckingBallSphere.intersects(circleSphere))
+        float collisionTime;
+
+        // For each static object, perform the interval halving collision test
+        if (testMovingSphereSphere(wreckingBallSphere, d, t0, t1, circleSphere, collisionTime))
         {
-            // Collision detected with circle
+            // Collision detected with circle at time collisionTime
             circleSphere.isColliding = true;
             noIntersection = false;
+
+            // Optional: Handle collision response here, e.g., stop motion at collision point
+            sf::Vector2f collisionPosition = linearMotion.getPositionAtTime(collisionTime);
+            wreckingBall.setPosition(collisionPosition);
+            wreckingBallSphere.calculateFromShape();
         }
         else
         {
-            // No collision
             circleSphere.isColliding = false;
         }
+        // if (wreckingBallSphere.intersects(circleSphere))
+        // {
+        //     // Collision detected with circle
+        //     circleSphere.isColliding = true;
+        //     noIntersection = false;
+        // }
+        // else
+        // {
+        //     // No collision
+        //     circleSphere.isColliding = false;
+        // }
 
         if (wreckingBallSphere.intersects(rectangleSphere))
         {
@@ -216,14 +244,27 @@ int main()
             linePlane.isColliding = false;
         }
 
-        if (noIntersection)
+        if (!noIntersection)
         {
-            wreckingBallSphere.isColliding = false;
+#ifdef LINEAR_MOTION
+            // Stop the motion at the collision point
+            // For LinearMotion
+            sf::Vector2f collisionPosition = linearMotion.getPositionAtTime(collisionTime);
+            // linearMotion.setPosition(collisionPosition);
+            wreckingBall.setPosition(collisionPosition);
+            wreckingBallSphere.calculateFromShape();
+#endif
+            wreckingBallSphere.isColliding = true;
         }
         else
         {
-            wreckingBallSphere.isColliding = true;
+
+            wreckingBallSphere.isColliding = false;
         }
+
+#ifdef LINEAR_MOTION
+        linearMotion.update();
+#endif
 
         // Shapes are drawn by their bounding volumes
 

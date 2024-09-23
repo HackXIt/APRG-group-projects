@@ -10,7 +10,7 @@
 // NOTE Sources taken from: Ericson, C. (2004). Real-time collision detection. Taylor & Francis Group.
 // Adjusted for types available in SFML
 
-namespace collision_detection {
+namespace collision_detection_book {
 
 #pragma region UtilityFunctions
 
@@ -20,7 +20,7 @@ namespace collision_detection {
     // Compute indices to the two most separated points of the (up to) six points
     // defining the AABB encompassing the point set. Return these as min and max.
     void MostSeparatedPointsOnAABB(int &min, int &max, sf::Vector2f pt[], int numPts);
-    void SphereFromDistantPoints(Sphere &s, sf::Vector2f pt[], int numPts);
+    void SphereFromDistantPoints(collision_detection::Sphere &s, sf::Vector2f pt[], int numPts);
 
 #pragma endregion
 
@@ -173,7 +173,7 @@ namespace collision_detection {
 
     // Intersect sphere s with movement vector v with plane p. If intersecting
     // return time t of collision and point q at which sphere hits plane
-    int IntersectMovingSpherePlane(Sphere s, sf::Vector2<float> v, Plane p, float &t, sf::Vertex &q);
+    int IntersectMovingSpherePlane(collision_detection::Sphere s, sf::Vector2<float> v, collision_detection::Plane p, float &t, sf::Vertex &q);
     /*
     {
         // Compute distance of sphere center to plane
@@ -202,7 +202,7 @@ namespace collision_detection {
     */
 
     // Test if sphere with radius r moving from a to b intersects with plane p
-    int TestMovingSpherePlane(sf::Vertex a, sf::Vertex b, float r, Plane p);
+    int TestMovingSpherePlane(sf::Vertex a, sf::Vertex b, float r, collision_detection::Plane p);
     /*
     {
         // Get the distance for both a and b from plane p
@@ -217,7 +217,7 @@ namespace collision_detection {
     }
     */
 
-    int IntersectMovingSphereAABB(Sphere s, sf::Vector2<float> d, sf::FloatRect b, float &t);
+    int IntersectMovingSphereAABB(collision_detection::Sphere s, sf::Vector2<float> d, sf::FloatRect b, float &t);
     /*
     {
         // Compute the AABB resulting from expanding b by sphere radius r
