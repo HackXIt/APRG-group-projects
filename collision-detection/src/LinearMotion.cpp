@@ -10,7 +10,7 @@ LinearMotion::LinearMotion(sf::Shape& shape, float velocity, sf::Vector2f target
 {
 }
 
-void LinearMotion::update()
+void LinearMotion::update() const
 {
     if(shapeToMove.getPosition() == target)
     {

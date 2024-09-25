@@ -11,7 +11,7 @@
 class LinearMotion {
 public:
     LinearMotion(sf::Shape& shape, float velocity = 0.0f, sf::Vector2f target = {0.0f, 0.0f});
-    void update();
+    void update() const;
 
     void setVelocity(float v);
     float getVelocity() const;

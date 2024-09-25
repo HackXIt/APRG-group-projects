@@ -10,6 +10,7 @@
 #include "AABB.h"
 #include "InformationWindow.hpp"
 #include "Plane.h"
+#include "VisualVector.h"
 
 // (these constants are just joke variable names since the object is a wrecking ball)
 const int DEATH_SPIKES = 20; // i.e. point count
@@ -80,9 +81,9 @@ int main()
     triangle.setPosition(windowCenter + sf::Vector2f(-200, 0));
 
     sf::Vertex line[2];
-    line[0].position = sf::Vector2f(640, 352);
+    line[0].position = sf::Vector2f(640, 252);
     line[0].color = sf::Color::Yellow;
-    line[1].position = sf::Vector2f(740, 352);
+    line[1].position = sf::Vector2f(740, 252);
     line[1].color = sf::Color::Yellow;
 
     // Create Sphere bounding volumes for the other shapes
@@ -90,6 +91,9 @@ int main()
     collision_detection::AABB rectangleSphere(&rectangle);
     collision_detection::Triangle triangleAABB(&triangle);
     collision_detection::Plane linePlane(line);
+
+    // Incremental update
+    bool update = false;
 
     // Load a font for text
     sf::Font font;
@@ -144,10 +148,21 @@ int main()
                 linearMotion.setTarget(mousePos);
             }
 #endif
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space)
+            {
+                update = true;
+            }        //
+        // ei::Vec2 current = ei::Vec2(wreckingBall.getPosition().x, wreckingBall.getPosition().y);
+        // ei::Vec2 target = ei::Vec2(current + ei::Vec2{15, 15});
+        // VisualVector v0(current, target);
+        // v0.draw(window);
         }
 
         // Clear the window with a black color
         window.clear(sf::Color::Black);
+
+
 
         float deltaTime = clock.restart().asSeconds(); // Use SFML clock to get deltaTime
         float t0 = 0.0f;
@@ -159,21 +174,32 @@ int main()
 #endif
 #ifdef LINEAR_MOTION
         // Get the velocity from LinearMotion
-        ei::Vec2 velocity = linearMotion.getVelocityVec2();
-        ei::Vec2 d = velocity; // Since deltaTime is t1 - t0 and t1 - t0 = deltaTime
-        // linearMotion.update();
+        // ei::Vec2 velocity = linearMotion.getVelocityVec2();
+        // ei::Vec2 d = velocity; // Since deltaTime is t1 - t0 and t1 - t0 = deltaTime
+        ei::Vec2 d{15, 15};
+        if(update)
+        {
+            linearMotion.update();
+            // Update the bounding volume to match the new shape position
+            wreckingBallSphere.calculateFromShape();
+            // wreckingBallTriangle.calculateFromShape(wreckingBall);
+            // wreckingBallAABB.calculateFromShape(wreckingBall);
+
+            // NOTE The other shapes are static, but we update them anyhow
+            circleSphere.calculateFromShape();
+            rectangleSphere.calculateFromShape();
+            triangleAABB.calculateFromShape();
+            linePlane.calculateFromShape();
+            // Draw the bounding volume (debugging)
+            wreckingBallSphere.draw(window);
+            // wreckingBallTriangle.draw(window);
+            // wreckingBallAABB.draw(window);
+            triangleAABB.draw(window);
+            circleSphere.draw(window);
+            rectangleSphere.draw(window);
+            linePlane.draw(window);
+        }
 #endif
-
-        // Update the bounding volume to match the new shape position
-        wreckingBallSphere.calculateFromShape();
-        // wreckingBallTriangle.calculateFromShape(wreckingBall);
-        // wreckingBallAABB.calculateFromShape(wreckingBall);
-
-        // NOTE The other shapes are static, but we update them anyhow
-        circleSphere.calculateFromShape();
-        rectangleSphere.calculateFromShape();
-        triangleAABB.calculateFromShape();
-        linePlane.calculateFromShape();
 
         bool noIntersection = true;
 
@@ -181,7 +207,7 @@ int main()
         float collisionTime;
 
         // For each static object, perform the interval halving collision test
-        if (testMovingSphereSphere(wreckingBallSphere, d, t0, t1, circleSphere, collisionTime))
+        if (wreckingBallSphere.testMovingSphereSphereVisualContinous(d, t0, t1, circleSphere, collisionTime, window))
         {
             // Collision detected with circle at time collisionTime
             circleSphere.isColliding = true;
@@ -251,20 +277,18 @@ int main()
             // For LinearMotion
             sf::Vector2f collisionPosition = linearMotion.getPositionAtTime(collisionTime);
             // linearMotion.setPosition(collisionPosition);
-            wreckingBall.setPosition(collisionPosition);
+            // wreckingBall.setPosition(collisionPosition);
             wreckingBallSphere.calculateFromShape();
 #endif
             wreckingBallSphere.isColliding = true;
         }
         else
         {
-
+#ifdef LINEAR_MOTION
+#endif
             wreckingBallSphere.isColliding = false;
         }
 
-#ifdef LINEAR_MOTION
-        linearMotion.update();
-#endif
 
         // Shapes are drawn by their bounding volumes
 
@@ -276,20 +300,25 @@ int main()
         // window.draw(rectangle);
         // window.draw(triangle);
 
-        // Draw the bounding volume (debugging)
-        wreckingBallSphere.draw(window);
-        // wreckingBallTriangle.draw(window);
-        // wreckingBallAABB.draw(window);
-        triangleAABB.draw(window);
-        circleSphere.draw(window);
-        rectangleSphere.draw(window);
-        linePlane.draw(window);
+        if(!update)
+        {
+            // Draw the bounding volume (debugging)
+            wreckingBallSphere.draw(window);
+            // wreckingBallTriangle.draw(window);
+            // wreckingBallAABB.draw(window);
+            triangleAABB.draw(window);
+            circleSphere.draw(window);
+            rectangleSphere.draw(window);
+            linePlane.draw(window);
+        }
 
         // Draw the configuration window
         configWindow.draw(window);
 
         // Draw the information window
         infoWindow.draw(window);
+
+        update = false;
 
         // Display the contents of the window
         window.display();

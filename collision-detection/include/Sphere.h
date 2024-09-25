@@ -4,6 +4,7 @@
 
 #ifndef SPHERE_H
 #define SPHERE_H
+#include "AABB.h"
 #include "BoundingVolume.h"
 #include "ei/2dtypes.hpp"
 
@@ -32,19 +33,39 @@ namespace collision_detection {
             boundedShape = shape;
         }
 
+        void calculateFromThis();
         void calculateFromShape() override;
         bool intersects(const BoundingVolume& other) const override;
         void draw(sf::RenderWindow& window) const override;
 
+        void drawBounded(sf::RenderWindow& window) const;
+        void drawDebug(sf::RenderWindow& window) const;
+
         std::string toString() const override;
+
+        bool testMovingSphereSphereVisualContinous(const ei::Vec2& d, float t0, float t1, const Sphere& s1, float& collisionTime, sf::RenderWindow& window);
+
+        bool testMovingSphereSphereVisual(
+            const ei::Vec2& d,
+            float t0,
+            float t1,
+            const Sphere& s1,
+            float& collisionTime,
+            sf::RenderWindow& window);
     };
 
     bool testMovingSphereSphere(
-        const collision_detection::Sphere& s0,
+        const Sphere& s0,
         const ei::Vec2& d,
         float t0,
         float t1,
-        const collision_detection::Sphere& s1,
+        const Sphere& s1,
+        float& collisionTime);
+    bool TestMovingSphereAABB(
+        const Sphere& s0,
+        const ei::Vec2& d,
+        float t0, float t1,
+        const AABB& s1,
         float& collisionTime);
 } // collision_detection
 

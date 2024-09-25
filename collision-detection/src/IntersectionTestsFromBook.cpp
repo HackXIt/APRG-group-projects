@@ -12,7 +12,7 @@
 
 namespace collision_detection_book
 {
-
+/*
     //calculates dot product of 2 vectors
     float dot( const sf::Vector2f& lhs, const sf::Vector2f& rhs ) noexcept
     {
