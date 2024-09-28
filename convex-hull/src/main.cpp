@@ -34,6 +34,7 @@ int main()
 
     // Create algorithm holder for step visualization
     VisualAlgorithm alg_holder(exampleAlgorithm);
+    alg_holder.setFont(font);
 
     // Create TextWindow (for information fields)
     TextWindow textWindow(font);
@@ -51,6 +52,11 @@ int main()
 
             if (event.type == sf::Event::MouseButtonPressed)
             {
+                if (alg_holder.IsStarted())
+                {
+                    std::cout << "Cannot add points after algorithm calculation started. Please complete calculation." << std::endl;
+                    continue;
+                }
                 // Get mouse position
                 sf::Vector2i mousePosWindow = sf::Mouse::getPosition(window);
                 sf::Vector2f mousePos = window.mapPixelToCoords(mousePosWindow);
@@ -59,6 +65,8 @@ int main()
                 points.emplace_back(mousePos.x, mousePos.y);
                 auto index = textWindow.addTextField(mousePos, 0, 30);
                 textWindow.setText(index, "X: " + std::to_string(mousePos.x) + "\nY: " + std::to_string(mousePos.y));
+                std::cout << "Added point at: (" << mousePos.x << "," << mousePos.y << ")" << std::endl;
+                alg_holder.setInput(points);
             }
 
             if (event.type == sf::Event::KeyPressed)
@@ -66,7 +74,14 @@ int main()
                 switch (event.key.code)
                 {
                 case sf::Keyboard::Enter:
-                    alg_holder.drawStep(window);
+                    alg_holder.runAlgorithm();
+                    break;
+                case sf::Keyboard::Space:
+                    alg_holder.visualStep();
+                    break;
+                case sf::Keyboard::R:
+                    std::cout << "Resetting algorithm" << std::endl;
+                    alg_holder.reset();
                     break;
                 default:
                     std::cout << "Key: " << event.key.code << " not used/supported" << std::endl;
@@ -77,6 +92,7 @@ int main()
 
         window.draw(drawableDots);
         textWindow.draw(window);
+        alg_holder.draw(window);
 
         window.display();
     }

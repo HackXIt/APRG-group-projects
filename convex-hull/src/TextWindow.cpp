@@ -30,6 +30,8 @@ int TextWindow::addTextField(sf::Vector2f position, float offsetX, float offsetY
     textField.field.setCharacterSize(12);
     textField.field.setFillColor(sf::Color::White);
     textField.field.setPosition(position);
+    textField.offsetX = offsetX;
+    textField.offsetY = offsetY;
     textFields.push_back(textField);
     return textFields.size() - 1; // return added index
 }
