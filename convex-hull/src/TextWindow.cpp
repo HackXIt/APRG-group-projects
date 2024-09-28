@@ -31,7 +31,7 @@ int TextWindow::addTextField(sf::Vector2f position, float offsetX, float offsetY
     textField.field.setFillColor(sf::Color::White);
     textField.field.setPosition(position);
     textFields.push_back(textField);
-    return textFields.size();
+    return textFields.size() - 1; // return added index
 }
 
 void TextWindow::setText(int textFieldIndex, const std::string &text)

@@ -58,8 +58,7 @@ int main()
                 drawableDots.append(dot);
                 points.emplace_back(mousePos.x, mousePos.y);
                 auto index = textWindow.addTextField(mousePos, 0, 30);
-                // FIXME breaks - supposed to show textfield with X,Y coordinates for each dot added
-                //textWindow.setText(index, "X: " + std::to_string(mousePos.x) + ", Y: " + std::to_string(mousePos.y));
+                textWindow.setText(index, "X: " + std::to_string(mousePos.x) + "\nY: " + std::to_string(mousePos.y));
             }
 
             if (event.type == sf::Event::KeyPressed)
@@ -70,13 +69,14 @@ int main()
                     alg_holder.drawStep(window);
                     break;
                 default:
-                    std::cout << "Key: " << event.key.code << "not used/supported" << std::endl;
+                    std::cout << "Key: " << event.key.code << " not used/supported" << std::endl;
                     break;
                 }
             }
         }
 
         window.draw(drawableDots);
+        textWindow.draw(window);
 
         window.display();
     }
