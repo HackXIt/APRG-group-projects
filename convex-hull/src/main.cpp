@@ -57,8 +57,9 @@ int main()
                 auto dot = sf::Vertex(mousePos, sf::Color::White);
                 drawableDots.append(dot);
                 points.emplace_back(mousePos.x, mousePos.y);
-                textWindow.addTextField(mousePos, 0, 30);
-                textWindow.setText()
+                auto index = textWindow.addTextField(mousePos, 0, 30);
+                // FIXME breaks - supposed to show textfield with X,Y coordinates for each dot added
+                //textWindow.setText(index, "X: " + std::to_string(mousePos.x) + ", Y: " + std::to_string(mousePos.y));
             }
 
             if (event.type == sf::Event::KeyPressed)
