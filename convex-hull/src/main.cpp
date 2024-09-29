@@ -3,128 +3,97 @@
 #include <coroutine>
 #include <cstdint>
 #include <exception>
+#include <ei/2dtypes.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/Window/Event.hpp>
 
-template<typename T>
-struct Generator
-{
-    // The class name 'Generator' is our choice and it is not required for coroutine
-    // magic. Compiler recognizes coroutine by the presence of 'co_yield' keyword.
-    // You can use name 'MyGenerator' (or any other name) instead as long as you include
-    // nested struct promise_type with 'MyGenerator get_return_object()' method.
-    // (Note: It is necessary to adjust the declarations of constructors and destructors
-    //  when renaming.)
+#include "app.h"
+#include "TextWindow.h"
+#include "VisualAlgorithm.h"
 
-    struct promise_type;
-    using handle_type = std::coroutine_handle<promise_type>;
-
-    struct promise_type // required
-    {
-        T value_;
-        std::exception_ptr exception_;
-
-        Generator get_return_object()
-        {
-            return Generator(handle_type::from_promise(*this));
-        }
-        std::suspend_always initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept { return {}; }
-        void unhandled_exception() { exception_ = std::current_exception(); } // saving
-                                                                              // exception
-
-        template<std::convertible_to<T> From> // C++20 concept
-        std::suspend_always yield_value(From&& from)
-        {
-            value_ = std::forward<From>(from); // caching the result in promise
-            return {};
-        }
-        void return_void() {}
-    };
-
-    handle_type h_;
-
-    Generator(handle_type h) : h_(h) {}
-    ~Generator() { h_.destroy(); }
-    explicit operator bool()
-    {
-        fill(); // The only way to reliably find out whether or not we finished coroutine,
-                // whether or not there is going to be a next value generated (co_yield)
-                // in coroutine via C++ getter (operator () below) is to execute/resume
-                // coroutine until the next co_yield point (or let it fall off end).
-                // Then we store/cache result in promise to allow getter (operator() below
-                // to grab it without executing coroutine).
-        return !h_.done();
-    }
-    T operator()()
-    {
-        fill();
-        full_ = false; // we are going to move out previously cached
-                       // result to make promise empty again
-        return std::move(h_.promise().value_);
-    }
-
-private:
-    bool full_ = false;
-
-    void fill()
-    {
-        if (!full_)
-        {
-            h_();
-            if (h_.promise().exception_)
-                std::rethrow_exception(h_.promise().exception_);
-            // propagate coroutine exception in called context
-
-            full_ = true;
-        }
-    }
-};
-
-Generator<std::uint64_t>
-fibonacci_sequence(unsigned n)
-{
-    if (n == 0)
-        co_return;
-
-    if (n > 94)
-        throw std::runtime_error("Too big Fibonacci sequence. Elements would overflow.");
-
-    co_yield 0;
-
-    if (n == 1)
-        co_return;
-
-    co_yield 1;
-
-    if (n == 2)
-        co_return;
-
-    std::uint64_t a = 0;
-    std::uint64_t b = 1;
-
-    for (unsigned i = 2; i < n; ++i)
-    {
-        std::uint64_t s = a + b;
-        co_yield s;
-        a = b;
-        b = s;
-    }
-}
 
 int main()
 {
-    try
-    {
-        auto gen = fibonacci_sequence(10); // max 94 before uint64_t overflows
+    sf::RenderWindow window(sf::VideoMode(WINDOW_DEFAULT_HEIGHT, WINDOW_DEFAULT_HEIGHT), "APRG - Convex Hull");
+    // Center position (for resetting shape positions)
+    sf::Vector2f windowCenter = {WINDOW_DEFAULT_WIDTH / 2.f, WINDOW_DEFAULT_HEIGHT / 2.f};
 
-        for (int j = 0; gen; ++j)
-            std::cout << "fib(" << j << ")=" << gen() << '\n';
-    }
-    catch (const std::exception& ex)
+    // Load a font for text
+    sf::Font font;
+    if (!font.loadFromFile("../resources/FiraCodeNerdFontMono-Retina.ttf"))
     {
-        std::cerr << "Exception: " << ex.what() << '\n';
+        std::cerr << "Error loading font\n";
+        return 1;
     }
-    catch (...)
+
+    // Clock for measuring time
+    sf::Clock clock;
+
+    sf::VertexArray drawableDots;
+    std::vector<ei::Vec2> points;
+
+    // Create algorithm holder for step visualization
+    VisualAlgorithm alg_holder(exampleAlgorithm);
+    alg_holder.setFont(font);
+
+    // Create TextWindow (for information fields)
+    TextWindow textWindow(font);
+
+    // Main loop
+    while (window.isOpen())
     {
-        std::cerr << "Unknown exception.\n";
+        // Handle events
+        sf::Event event{};
+        while (window.pollEvent(event))
+        {
+            // Close window : exit
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                if (alg_holder.IsStarted())
+                {
+                    std::cout << "Cannot add points after algorithm calculation started. Please complete calculation." << std::endl;
+                    continue;
+                }
+                // Get mouse position
+                sf::Vector2i mousePosWindow = sf::Mouse::getPosition(window);
+                sf::Vector2f mousePos = window.mapPixelToCoords(mousePosWindow);
+                auto dot = sf::Vertex(mousePos, sf::Color::White);
+                drawableDots.append(dot);
+                points.emplace_back(mousePos.x, mousePos.y);
+                auto index = textWindow.addTextField(mousePos, 0, 30);
+                textWindow.setText(index, "X: " + std::to_string(mousePos.x) + "\nY: " + std::to_string(mousePos.y));
+                std::cout << "Added point at: (" << mousePos.x << "," << mousePos.y << ")" << std::endl;
+                alg_holder.setInput(points);
+            }
+
+            if (event.type == sf::Event::KeyPressed)
+            {
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Enter:
+                    alg_holder.runAlgorithm();
+                    break;
+                case sf::Keyboard::Space:
+                    alg_holder.visualStep();
+                    break;
+                case sf::Keyboard::R:
+                    std::cout << "Resetting algorithm" << std::endl;
+                    alg_holder.reset();
+                    break;
+                default:
+                    std::cout << "Key: " << event.key.code << " not used/supported" << std::endl;
+                    break;
+                }
+            }
+        }
+
+        window.draw(drawableDots);
+        textWindow.draw(window);
+        alg_holder.draw(window);
+
+        window.display();
     }
 }
