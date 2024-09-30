@@ -37,4 +37,19 @@ int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints);
 // Using a pointer reference to allow for default nullptr value (i.e. no points loaded)
 int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints = nullptr);
 
+inline std::string algorithmToString(Algorithm algorithm)
+{
+    switch (algorithm)
+    {
+    case QUICK_HULL:
+        return "QuickHull";
+    case JARVIS_MARCH:
+        return "Jarvis March";
+    case DIVIDE_AND_CONQUER:
+        return "Divide & Conquer";
+    default:
+            return "Unknown";
+    }
+}
+
 #endif //APP_H

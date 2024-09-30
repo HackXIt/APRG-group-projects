@@ -14,7 +14,7 @@
 #include "TextWindow.h"
 #include "VisualAlgorithm.h"
 #include "JarvisMarch.h"
-// #include "Quickhull.h"
+#include "QuickHull.h"
 
 int main(int argc, char *argv[])
 {
@@ -115,13 +115,13 @@ int main(int argc, char *argv[])
 
 int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)
 {
-    std::cout << "Running algorithm in console mode..." << std::endl;
+    std::cout << "Running " << algorithmToString(algorithm) << " in console mode..." << std::endl;
     std::vector<ei::Vec2> hull;
     auto start = std::chrono::high_resolution_clock::now();
     switch (algorithm)
     {
         case QUICK_HULL:
-            // quickHullAlgorithm(loadedPoints);
+            hull = quick_hull_performance(loadedPoints);
             break;
         case JARVIS_MARCH:
             hull = jarvis_march_performance(loadedPoints);
@@ -153,17 +153,13 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
 
     sf::VertexArray drawableDots;
     std::vector<ei::Vec2> points;
-    if(loadedPoints)
-    {
-        points = *loadedPoints;
-    }
 
     // Create algorithm holder for step visualization
     VisualAlgorithm alg_holder;
     switch (algorithm)
     {
         case QUICK_HULL:
-            // alg_holder = VisualAlgorithm(quickHullAlgorithm);
+            alg_holder = VisualAlgorithm(quick_hull_visualization);
             break;
         case JARVIS_MARCH:
             alg_holder = VisualAlgorithm(jarvis_march_visualization);
@@ -176,6 +172,19 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
 
     // Create TextWindow (for information fields)
     TextWindow textWindow(font);
+
+    // Handle pre-loaded points
+    if(loadedPoints)
+    {
+        points = *loadedPoints;
+        for (const auto &point : points)
+        {
+            auto dot = sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::White);
+            drawableDots.append(dot);
+            auto index = textWindow.addTextField(sf::Vector2f(point.x, point.y), 0, 30);
+            textWindow.setText(index, "X: " + std::to_string(point.x) + "\nY: " + std::to_string(point.y));
+        }
+    }
 
     // Main loop
     while (window.isOpen())
