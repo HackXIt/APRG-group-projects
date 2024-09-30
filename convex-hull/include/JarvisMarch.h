@@ -12,7 +12,7 @@ const short ORIENTATION_CLOCKWISE = 1;
 const short ORIENTATION_COUNTERCLOCKWISE = -1;
 
 // Only added public functions in header
-std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points);
-AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points);
+std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER& points);
+AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points);
 
 #endif //JARVISMARCH_H

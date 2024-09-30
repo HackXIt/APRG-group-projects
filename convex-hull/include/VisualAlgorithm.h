@@ -8,14 +8,140 @@
 #include <coroutine>
 #include <iostream>
 #include <functional>
+#include <memory>
 
 #include "ei/2dtypes.hpp"
-#include "SFML/Graphics/CircleShape.hpp"
-#include "SFML/Graphics/RenderWindow.hpp"
-#include "SFML/Graphics/Text.hpp"
+#include "SFML/Graphics.hpp"
+#include "app.h"
 
-#define RETURN_TYPE         ei::Vec2
+#define RETURN_TYPE         std::shared_ptr<Visual>
 #define INPUT_PARAMETER     std::vector<ei::Vec2>
+
+struct IndicatorLine
+{
+    sf::Text text;
+    sf::VertexArray line;
+    IndicatorLine()
+    {
+        line = sf::VertexArray(sf::LineStrip, 0);
+    }
+    IndicatorLine(const sf::Vector2f& start, const sf::Vector2f& end, const sf::Color& color) : IndicatorLine()
+    {
+        line.append(sf::Vertex(start, color));
+        line.append(sf::Vertex(end, color));
+    }
+    void setLine(const sf::Vector2f& start, const sf::Vector2f& end, const sf::Color& color)
+    {
+        line.clear();
+        line.append(sf::Vertex(start, color));
+        line.append(sf::Vertex(end, color));
+    }
+    void setText(const std::string& text, const sf::Vector2f& position)
+    {
+        this->text.setString(text);
+        this->text.setPosition(position);
+    }
+    void setFont(const sf::Font& font)
+    {
+        text.setFont(font);
+    }
+    void draw(sf::RenderWindow& window) const
+    {
+        window.draw(line);
+        window.draw(text);
+    }
+};
+
+struct Highlight
+{
+    sf::Text text;
+    sf::CircleShape highlight;
+    sf::Vector2f position;
+    Highlight() = default;
+    Highlight(const sf::Vector2f& position, const std::string& text, const sf::Color& color)
+    {
+        this->text.setCharacterSize(12);
+        this->text.setFillColor(sf::Color::White);
+        this->text.setPosition(position.x, position.y + 30); // 30 == offsetY
+        this->text.setString(text);
+
+        highlight.setRadius(5);
+        highlight.setFillColor(color);
+        highlight.setPosition(position);
+        // Set origin to center
+        highlight.setOrigin(5, 5);
+        this->position = position;
+    }
+    void setFont(const sf::Font& font)
+    {
+        text.setFont(font);
+    }
+    void draw(sf::RenderWindow& window) const
+    {
+        window.draw(highlight);
+        window.draw(text);
+    }
+};
+
+struct Visual
+{
+    sf::Text explanation;
+    sf::VertexArray current_hull;
+    std::vector<IndicatorLine> indicator_lines;
+    std::vector<Highlight> highlights;
+    bool finished = false;
+    Visual()
+    {
+        explanation.setCharacterSize(12);
+        explanation.setFillColor(sf::Color::White);
+        explanation.setPosition(10, 10); // top-left
+        current_hull = sf::VertexArray(sf::LineStrip, 0);
+        indicator_lines = std::vector<IndicatorLine>();
+    }
+    void setFont(const sf::Font& font)
+    {
+        explanation.setFont(font);
+        for (auto& highlight : highlights)
+        {
+            highlight.setFont(font);
+        }
+        for (auto& line : indicator_lines)
+        {
+            line.setFont(font);
+        }
+    }
+    void setExplanation(const std::string& text)
+    {
+        explanation.setString(text);
+    }
+    void addHighlight(const sf::Vector2f& position, const std::string& text, const sf::Color& color)
+    {
+        highlights.emplace_back(position, text, color);
+    }
+    void removeHighlight(const sf::Vector2f& position)
+    {
+        std::erase_if(highlights, [position](const Highlight& highlight) {
+            return highlight.position == position;
+        });
+    }
+    void clearHighlights()
+    {
+        highlights.clear();
+    }
+    void draw(sf::RenderWindow& window) const
+    {
+        window.draw(explanation);
+        window.draw(current_hull);
+        for (auto& highlight : highlights)
+        {
+            highlight.draw(window);
+        }
+        for (auto& line : indicator_lines)
+        {
+            line.draw(window);
+        }
+    }
+};
 
 // Generator coroutine that yields integers (i.e. the generator template used)
 struct AlgorithmGenerator {
@@ -24,8 +150,8 @@ struct AlgorithmGenerator {
 
     struct promise_type {
         RETURN_TYPE current_value;
-        std::suspend_always yield_value(const RETURN_TYPE value) {
-            current_value = value;
+        std::suspend_always yield_value(RETURN_TYPE value) {
+            current_value = std::move(value); // Move the shared_ptr to avoid copying
             return {};
         }
         AlgorithmGenerator get_return_object() {
@@ -82,58 +208,39 @@ struct AlgorithmGenerator {
     }
 };
 
-inline AlgorithmGenerator exampleAlgorithm(const INPUT_PARAMETER& vector) // Passing data by value (copy)
-{
-    std::cout << "COROUTINE: " << std::to_string(vector.size()) << " points received." << std::endl;
-    for (const auto& point : vector)
-    {
-        std::cout << "COROUTINE: " << "Processing point: (" << point.x << "," << point.y << ")" << std::endl;
-        co_yield point;
-    }
-    co_return;
-}
-
-struct Visual
-{
-    sf::Text text;
-    sf::CircleShape highlight;
-    sf::Vector2f position;
-    Visual(const sf::Font& font, const sf::Vector2f& position, const std::string& text, const sf::Color& color)
-    {
-        this->text.setFont(font);
-        this->text.setCharacterSize(12);
-        this->text.setFillColor(sf::Color::White);
-        this->text.setPosition(position.x, position.y + 25); // 25 == offsetY
-        this->text.setString(text);
-
-        highlight.setRadius(5);
-        highlight.setFillColor(color);
-        highlight.setPosition(position);
-        this->position = position;
-    }
-};
+// inline AlgorithmGenerator exampleAlgorithm(const INPUT_PARAMETER& vector) // Passing data by value (copy)
+// {
+//     std::cout << "COROUTINE: " << std::to_string(vector.size()) << " points received." << std::endl;
+//     for (const auto& point : vector)
+//     {
+//         std::cout << "COROUTINE: " << "Processing point: (" << point.x << "," << point.y << ")" << std::endl;
+//         co_yield point;
+//     }
+//     co_return;
+// }
 
 class VisualAlgorithm {
 public:
     VisualAlgorithm() = default;
-    VisualAlgorithm(const std::function<AlgorithmGenerator(const INPUT_PARAMETER&)>& generator_func);
+    VisualAlgorithm(const std::function<AlgorithmGenerator(INPUT_PARAMETER&)>& generator_func);
 
     void setFont(const sf::Font& font);
     void setInput(const INPUT_PARAMETER& input_data);
-    void draw(sf::RenderWindow& window);
+    void draw(sf::RenderWindow& window) const;
     void visualStep();
-    ei::Vec2 step();
-    void runAlgorithm();
+    RETURN_TYPE step();
+    void runAlgorithm(sf::RenderWindow& window);
     void reset();
 
     bool IsStarted() const { return started_; }
 
 private:
-    std::function<AlgorithmGenerator(const INPUT_PARAMETER&)> algorithm_ = nullptr; // Stores the algorithm generator function
+    std::function<AlgorithmGenerator(INPUT_PARAMETER&)> algorithm_ = nullptr; // Stores the algorithm generator function
     AlgorithmGenerator generator_{nullptr}; // Stores the generator coroutine
     INPUT_PARAMETER input_data_;
     bool started_ = false;
-    std::vector<Visual> visuals_;
+    RETURN_TYPE visualization_ = nullptr;
+
     sf::Font font_;
 };
 

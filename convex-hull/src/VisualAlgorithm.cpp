@@ -4,9 +4,7 @@
 
 #include "VisualAlgorithm.h"
 
-#include "SFML/Graphics.hpp"
-
-VisualAlgorithm::VisualAlgorithm(const std::function<AlgorithmGenerator(const INPUT_PARAMETER&)>& generator_func)
+VisualAlgorithm::VisualAlgorithm(const std::function<AlgorithmGenerator(INPUT_PARAMETER&)>& generator_func)
 {
     algorithm_ = generator_func;
 }
@@ -21,24 +19,31 @@ void VisualAlgorithm::setFont(const sf::Font& font)
     font_ = font;
 }
 
-void VisualAlgorithm::draw(sf::RenderWindow& window)
+void VisualAlgorithm::draw(sf::RenderWindow& window) const
 {
-    for(const auto & visual : visuals_)
+    if(started_ && visualization_)
     {
-        window.draw(visual.highlight);
-        window.draw(visual.text);
+        visualization_->draw(window);
     }
 }
 
 void VisualAlgorithm::visualStep()
 {
-    ei::Vec2 point = step();
-    sf::CircleShape pointHighlight(5);
-    pointHighlight.setPosition(point.x, point.y);
-    visuals_.emplace_back(font_, pointHighlight.getPosition(), "Current point", sf::Color::Green);
+    // Depending on algorithm, expect different meaning for return value and handle accordingly
+    RETURN_TYPE visual = step();
+    if (visual)
+    {
+        std::cout << "Step '" << visual->explanation.getString().toAnsiString() << "' completed." << std::endl;
+        visual->setFont(font_);
+        visualization_ = visual;
+    }
+    else
+    {
+        std::cerr << "Error: No visualization data returned from algorithm step." << std::endl;
+    }
 }
 
-ei::Vec2 VisualAlgorithm::step()
+RETURN_TYPE VisualAlgorithm::step()
 {
     if (!started_) {
         // Initialize the coroutine only once, and allow it to enter its first suspension point
@@ -48,7 +53,7 @@ ei::Vec2 VisualAlgorithm::step()
         // Immediately move the coroutine to its first `co_yield` and set up for resumption
         if (!generator_.coro || generator_.coro.done()) {
             std::cerr << "Error: Coroutine initialization failed or it is already done.\n";
-            return ei::Vec2(0, 0);
+            return nullptr;  // Return a default value
         }
 
         // Resume it to hit the first `co_yield` statement
@@ -59,14 +64,14 @@ ei::Vec2 VisualAlgorithm::step()
     // Check if the coroutine is still valid before resuming
     if (!generator_.coro || generator_.coro.done()) {
         std::cerr << "Error: Attempt to resume an invalid or completed coroutine.\n";
-        return {0, 0};  // Return a default value
+        return nullptr;  // Return a default value
     }
 
     // Call next() on the stored generator to get the next value
     return generator_.next();
 }
 
-void VisualAlgorithm::runAlgorithm()
+void VisualAlgorithm::runAlgorithm(sf::RenderWindow& window)
 {
     if (started_)
     {
@@ -79,8 +84,8 @@ void VisualAlgorithm::runAlgorithm()
     // std::cout << "Received 1st point: (" << first.x << "," << first.y << ")" << std::endl;
     while (!generator_.coro.done())
     {
-        ei::Vec2 point = generator_.next();
-        std::cout << "Received point: (" << point.x << "," << point.y << ")" << std::endl;
+        visualStep();
+        draw(window);
     }
 }
 
@@ -89,7 +94,6 @@ void VisualAlgorithm::reset()
     if (started_) {
         // The destructor of AlgorithmGenerator will destroy the coroutine
         generator_ = {}; // Reset the generator, destroying the old coroutine
-        visuals_.clear(); // Clear any existing visuals
         started_ = false;
     }
 }

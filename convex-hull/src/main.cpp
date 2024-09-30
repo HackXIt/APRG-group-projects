@@ -1,7 +1,5 @@
 ﻿#include <iostream>
 
-#include <coroutine>
-#include <cstdint>
 #include <exception>
 #include <fstream>
 #include <chrono>
@@ -99,7 +97,6 @@ int main(int argc, char *argv[])
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
     data_file.close();
 
-    int exit_code;
     // Run program
     if (result.count("gui"))
     {
@@ -221,7 +218,7 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
                 switch (event.key.code)
                 {
                 case sf::Keyboard::Enter:
-                    alg_holder.runAlgorithm();
+                    alg_holder.runAlgorithm(window);
                     break;
                 case sf::Keyboard::Space:
                     alg_holder.visualStep();
@@ -236,6 +233,9 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
                 }
             }
         }
+
+        // Clear the window with a black color
+        window.clear(sf::Color::Black);
 
         window.draw(drawableDots);
         textWindow.draw(window);
