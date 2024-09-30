@@ -29,12 +29,26 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
 
     unsigned int current = left;
     unsigned int next;
+    unsigned int hull_count = 0;
+    unsigned int first_hull = 0;
+    ei::Vec2 help;
     do
     {
         hull.push_back(points[current]);
+        ++hull_count;
 
-        next = (current + 1) % point_count;
-        for (unsigned int i = 0; i < point_count; i++)
+        first_hull = point_count-hull_count+1;
+        next = (current + 1) % (first_hull);
+
+        if (hull_count > 1) {
+            
+            help = points[first_hull];
+            points[first_hull] = points[current];
+            points[current] = help;
+            current = first_hull;
+        }
+
+        for (unsigned int i = 0; i < first_hull; i++)
         {
             if (check_orientation(points[current], points[i], points[next]) == ORIENTATION_CLOCKWISE)
                 next = i;
@@ -64,13 +78,28 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
 
     unsigned int current = left;
     unsigned int next;
+    unsigned int hull_count = 0;
+    unsigned int first_hull = 0;
+    ei::Vec2 help;
     do
     {
         //hull.push_back(points[current]);
+        ++hull_count;
 
-        next = (current + 1) % point_count;
+        first_hull = point_count-hull_count+1;
+        next = (current + 1) % first_hull;
+
         co_yield points[next];
-        for (unsigned int i = 0; i < point_count; i++)
+
+        if (hull_count > 1) {
+            
+            help = points[first_hull];
+            points[first_hull] = points[current];
+            points[current] = help;
+            current = first_hull;
+        }
+
+        for (unsigned int i = 0; i < first_hull; i++)
         {
             co_yield points[i];
             if (check_orientation(points[current], points[i], points[next]) == ORIENTATION_CLOCKWISE)
