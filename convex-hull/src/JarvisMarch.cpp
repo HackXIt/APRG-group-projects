@@ -47,3 +47,42 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
 
     return hull;
 }
+
+AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
+{
+    unsigned int point_count = points.size();
+    
+    //if (point_count <= 3)
+        //return points;
+
+    //std::vector<ei::Vec2> hull;
+
+    unsigned int left = 0;
+    for (unsigned int i = 1; i < point_count; i++)
+        if (points[i].x < points[left].x)
+            left = i;
+
+    unsigned int current = left;
+    unsigned int next;
+    do
+    {
+        //hull.push_back(points[current]);
+
+        next = (current + 1) % point_count;
+        co_yield points[next];
+        for (unsigned int i = 0; i < point_count; i++)
+        {
+            co_yield points[i];
+            if (check_orientation(points[current], points[i], points[next]) == ORIENTATION_CLOCKWISE)
+                next = i;
+        }
+
+        current = next;
+
+        co_yield points[current];
+
+    }
+    while (current != left);
+
+    co_return;
+}
