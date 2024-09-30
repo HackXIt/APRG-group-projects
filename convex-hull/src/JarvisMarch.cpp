@@ -51,7 +51,6 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
         next = (current + 1) % (first_hull);
 
         if (hull_count > 1) {
-            
             help = points[first_hull];
             points[first_hull] = points[current];
             points[current] = help;
@@ -63,8 +62,7 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
             orientation = check_orientation(points[current], points[i], points[next]);
             if (orientation == ORIENTATION_CLOCKWISE)
                 next = i;
-
-            if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i)
+            else if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i)
                 next = i;
         }
 
@@ -108,7 +106,6 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
         co_yield points[next];
 
         if (hull_count > 1) {
-            
             help = points[first_hull];
             points[first_hull] = points[current];
             points[current] = help;
@@ -120,11 +117,14 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
             co_yield points[i];
 
             orientation = check_orientation(points[current], points[i], points[next]);
-            if (orientation == ORIENTATION_CLOCKWISE)
+            if (orientation == ORIENTATION_CLOCKWISE) {
                 next = i;
-
-            if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i)
+                co_yield points[next];
+            }
+            else if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i) {
                 next = i;
+                co_yield points[next];
+            }
         }
 
         current = next;
