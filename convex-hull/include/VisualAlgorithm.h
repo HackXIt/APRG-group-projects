@@ -14,6 +14,7 @@
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Text.hpp"
 
+#define RETURN_TYPE         ei::Vec2
 #define INPUT_PARAMETER     std::vector<ei::Vec2>
 
 // Generator coroutine that yields integers (i.e. the generator template used)
@@ -22,8 +23,8 @@ struct AlgorithmGenerator {
     using handle_type = std::coroutine_handle<promise_type>;
 
     struct promise_type {
-        ei::Vec2 current_value;
-        std::suspend_always yield_value(const ei::Vec2 value) {
+        RETURN_TYPE current_value;
+        std::suspend_always yield_value(const RETURN_TYPE value) {
             current_value = value;
             return {};
         }
@@ -70,7 +71,7 @@ struct AlgorithmGenerator {
 
     bool done() const { return coro.done(); }
 
-    ei::Vec2 next() {
+    RETURN_TYPE next() {
         if (!coro) {
             throw std::runtime_error("Attempt to use an invalid coroutine");
         }
