@@ -11,6 +11,15 @@
 constexpr int WINDOW_DEFAULT_WIDTH = 1280; ///< Default width of the window.
 constexpr int WINDOW_DEFAULT_HEIGHT = 1024; ///< Default height of the window.
 
+#define VISUALIZATION_POINTS_LIMIT 50
+
+enum Algorithm
+{
+    QUICK_HULL = 0,
+    JARVIS_MARCH = 1,
+    DIVIDE_AND_CONQUER = 2
+};
+
 /**
  * @brief Formats floating-point numbers to a string with two decimal places.
  * @param value The floating-point number to format.
@@ -24,7 +33,8 @@ inline std::string formatFloat(float value, int precision)
     return oss.str();
 }
 
-int console_main(std::vector<ei::Vec2>& loadedPoints);
-int gui_main(std::vector<ei::Vec2>* loadedPoints = nullptr);
+int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints);
+// Using a pointer reference to allow for default nullptr value (i.e. no points loaded)
+int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints = nullptr);
 
 #endif //APP_H

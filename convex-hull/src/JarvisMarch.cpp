@@ -1,8 +1,4 @@
-#include "VisualAlgorithm.h"
-
-const short ORIENTATION_COLLINEAR = 0;
-const short ORIENTATION_CLOCKWISE = 1;
-const short ORIENTATION_COUNTERCLOCKWISE = -1;
+#include "JarvisMarch.h"
 
 short check_orientation(ei::Vec2 a, ei::Vec2 b, ei::Vec2 c)
 {

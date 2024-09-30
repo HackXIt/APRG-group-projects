@@ -4,32 +4,47 @@
 #include <cstdint>
 #include <exception>
 #include <fstream>
+#include <chrono>
 #include <ei/2dtypes.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Event.hpp>
+#include <cxxopts.hpp>
 
 #include "app.h"
 #include "TextWindow.h"
 #include "VisualAlgorithm.h"
-#include "cxxopts.hpp"
+#include "JarvisMarch.h"
 // #include "Quickhull.h"
-
-
 
 int main(int argc, char *argv[])
 {
     if (argc == 1)
     {
-        gui_main();
+        // Just run the GUI if there's no arguments
+        return gui_main(JARVIS_MARCH);
     }
+
+    // Configure CLI options
     cxxopts::Options options("convex-hull", "Convex Hull Algorithms Visualization and Performance Test by Group (Nikolaus, Markus, Marius)");
 
     options.add_options()
-        ("h,help", "Print help")
-        ("g,gui", "Run with visualization using pre-loaded data (limited to less than 20 points)", cxxopts::value<bool>()->default_value("false"), "FLAG (bool)")
-        ("d,data_file", "Path to a file containing points to load\n 1st line == amount of data points\n line 2...n+1 == points with x,y coordinates (space-seperated)", cxxopts::value<std::string>(), "FILEPATH (string)");
+        ("h,help",
+            "Print help")
+        ("g,gui",
+            "Run with visualization using pre-loaded data (limited to less than 50 points)",
+            cxxopts::value<bool>()->default_value("false"),
+            "FLAG (bool)")
+        ("d,data_file",
+            "Path to a file containing points to load\n 1st line == amount of data points\n line 2...n+1 == points with x,y coordinates (space-seperated)",
+            cxxopts::value<std::string>(),
+            "FILEPATH (string)")
+        ("a,algorithm",
+            "Algorithm to use as integer. 0: QuickHull, 1: Jarvis March, 2: Divide & Conquer",
+            cxxopts::value<int>()->default_value("0"),
+            "MODE (int)");
     options.parse_positional({"data_file"});
 
+    // Parse CLI
     cxxopts::ParseResult result;
     try
     {
@@ -40,11 +55,26 @@ int main(int argc, char *argv[])
         std::cerr << "Error parsing options: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    // Print help
     if (result.count("help"))
     {
         std::cout << options.help() << std::endl;
         return EXIT_SUCCESS;
     }
+
+    // Handle mode
+    auto mode = result["algorithm"].as<int>();
+    if (mode < 0 || mode > 2)
+    {
+        std::cerr << "Invalid algorithm mode: " << mode << std::endl << "Valid modes are: 0: QuickHull, 1: Jarvis March, 2: Divide & Conquer" << std::endl;
+        return EXIT_FAILURE;
+    }
+    auto algorithm = static_cast<Algorithm>(mode);
+
+    // Handle file
+    std::cout << "Loading data file..." << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     auto filename = result["data_file"].as<std::string>();
     std::string line;
     std::ifstream data_file(filename);
@@ -64,19 +94,49 @@ int main(int argc, char *argv[])
         iss >> x >> y;
         points.emplace_back(x, y);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Loaded " << num_points << " points from file: " << filename << std::endl;
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    data_file.close();
+
+    int exit_code;
+    // Run program
     if (result.count("gui"))
     {
-        return gui_main(&points);
+        if(points.size() >= VISUALIZATION_POINTS_LIMIT)
+        {
+            std::cerr << "Too many points for visualization (Max: "<< VISUALIZATION_POINTS_LIMIT <<"). Please use console mode." << std::endl;
+            return EXIT_FAILURE;
+        }
+        return gui_main(algorithm, &points);
     }
-    return console_main(points);
+    return console_main(algorithm, points);
 }
 
-int console_main(std::vector<ei::Vec2>& loadedPoints)
+int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)
 {
+    std::cout << "Running algorithm in console mode..." << std::endl;
+    std::vector<ei::Vec2> hull;
+    auto start = std::chrono::high_resolution_clock::now();
+    switch (algorithm)
+    {
+        case QUICK_HULL:
+            // quickHullAlgorithm(loadedPoints);
+            break;
+        case JARVIS_MARCH:
+            hull = jarvis_march_performance(loadedPoints);
+            break;
+        case DIVIDE_AND_CONQUER:
+            // divideAndConquerAlgorithm(loadedPoints);
+            break;
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Convex Hull Points: " << hull.size() << std::endl;
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
     return EXIT_SUCCESS;
 }
 
-int gui_main(std::vector<ei::Vec2>* loadedPoints)
+int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
 {
     sf::RenderWindow window(sf::VideoMode(WINDOW_DEFAULT_HEIGHT, WINDOW_DEFAULT_HEIGHT), "APRG - Convex Hull");
     // Center position (for resetting shape positions)
@@ -84,14 +144,12 @@ int gui_main(std::vector<ei::Vec2>* loadedPoints)
 
     // Load a font for text
     sf::Font font;
+    // Font file path is relative to binary output. CMakelists.txt copies the font file to the binary directory.
     if (!font.loadFromFile("../resources/FiraCodeNerdFontMono-Retina.ttf"))
     {
         std::cerr << "Error loading font\n";
         return EXIT_FAILURE;
     }
-
-    // Clock for measuring time
-    sf::Clock clock;
 
     sf::VertexArray drawableDots;
     std::vector<ei::Vec2> points;
@@ -101,8 +159,19 @@ int gui_main(std::vector<ei::Vec2>* loadedPoints)
     }
 
     // Create algorithm holder for step visualization
-    //VisualAlgorithm alg_holder(exampleAlgorithm);
-    VisualAlgorithm alg_holder(quickHullAlgorithm);
+    VisualAlgorithm alg_holder;
+    switch (algorithm)
+    {
+        case QUICK_HULL:
+            // alg_holder = VisualAlgorithm(quickHullAlgorithm);
+            break;
+        case JARVIS_MARCH:
+            alg_holder = VisualAlgorithm(jarvis_march_visualization);
+            break;
+        case DIVIDE_AND_CONQUER:
+            // alg_holder = VisualAlgorithm(divideAndConquerAlgorithm);
+            break;
+    }
     alg_holder.setFont(font);
 
     // Create TextWindow (for information fields)
