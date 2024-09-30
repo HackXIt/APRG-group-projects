@@ -3,6 +3,7 @@
 #include <coroutine>
 #include <cstdint>
 #include <exception>
+#include <fstream>
 #include <ei/2dtypes.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Event.hpp>
@@ -10,9 +11,72 @@
 #include "app.h"
 #include "TextWindow.h"
 #include "VisualAlgorithm.h"
-#include "Quickhull.h"
+#include "cxxopts.hpp"
+// #include "Quickhull.h"
 
-int main()
+
+
+int main(int argc, char *argv[])
+{
+    if (argc == 1)
+    {
+        gui_main();
+    }
+    cxxopts::Options options("convex-hull", "Convex Hull Algorithms Visualization and Performance Test by Group (Nikolaus, Markus, Marius)");
+
+    options.add_options()
+        ("h,help", "Print help")
+        ("g,gui", "Run with visualization using pre-loaded data (limited to less than 20 points)", cxxopts::value<bool>()->default_value("false"), "FLAG (bool)")
+        ("d,data_file", "Path to a file containing points to load\n 1st line == amount of data points\n line 2...n+1 == points with x,y coordinates (space-seperated)", cxxopts::value<std::string>(), "FILEPATH (string)");
+    options.parse_positional({"data_file"});
+
+    cxxopts::ParseResult result;
+    try
+    {
+        result = options.parse(argc, argv);
+    }
+    catch (const cxxopts::exceptions::parsing &e)
+    {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (result.count("help"))
+    {
+        std::cout << options.help() << std::endl;
+        return EXIT_SUCCESS;
+    }
+    auto filename = result["data_file"].as<std::string>();
+    std::string line;
+    std::ifstream data_file(filename);
+    if(!data_file.is_open())
+    {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::getline(data_file, line);
+    int num_points = std::stoi(line);
+    std::vector<ei::Vec2> points;
+    for(int i = 0; i < num_points; i++)
+    {
+        std::getline(data_file, line);
+        std::istringstream iss(line);
+        float x, y;
+        iss >> x >> y;
+        points.emplace_back(x, y);
+    }
+    if (result.count("gui"))
+    {
+        return gui_main(&points);
+    }
+    return console_main(points);
+}
+
+int console_main(std::vector<ei::Vec2>& loadedPoints)
+{
+    return EXIT_SUCCESS;
+}
+
+int gui_main(std::vector<ei::Vec2>* loadedPoints)
 {
     sf::RenderWindow window(sf::VideoMode(WINDOW_DEFAULT_HEIGHT, WINDOW_DEFAULT_HEIGHT), "APRG - Convex Hull");
     // Center position (for resetting shape positions)
@@ -23,7 +87,7 @@ int main()
     if (!font.loadFromFile("../resources/FiraCodeNerdFontMono-Retina.ttf"))
     {
         std::cerr << "Error loading font\n";
-        return 1;
+        return EXIT_FAILURE;
     }
 
     // Clock for measuring time
@@ -31,6 +95,10 @@ int main()
 
     sf::VertexArray drawableDots;
     std::vector<ei::Vec2> points;
+    if(loadedPoints)
+    {
+        points = *loadedPoints;
+    }
 
     // Create algorithm holder for step visualization
     //VisualAlgorithm alg_holder(exampleAlgorithm);
@@ -97,4 +165,5 @@ int main()
 
         window.display();
     }
+    return EXIT_SUCCESS;
 }

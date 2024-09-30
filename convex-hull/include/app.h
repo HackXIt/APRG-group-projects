@@ -24,4 +24,7 @@ inline std::string formatFloat(float value, int precision)
     return oss.str();
 }
 
+int console_main(std::vector<ei::Vec2>& loadedPoints);
+int gui_main(std::vector<ei::Vec2>* loadedPoints = nullptr);
+
 #endif //APP_H

@@ -14,25 +14,24 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include ${CMAKE_CURRENT_LIST_DIR}/epsilon/include)
-
 FILE(GLOB SOURCES src/*.cpp)
 
 # Add the executable and link SFML
-add_executable(collision-detection ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 # Copy the font file to the build directory
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/FiraCodeNerdFontMono-Retina.ttf
         ${CMAKE_CURRENT_BINARY_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
         COPYONLY)
 
-target_link_libraries(collision-detection PRIVATE sfml-graphics)
-target_compile_features(collision-detection PRIVATE cxx_std_17)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include ${CMAKE_CURRENT_LIST_DIR}/../extern/epsilon/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 # On windows we need to copy the DLL to the output path
 if(WIN32)
     add_custom_command(
-            TARGET collision-detection
+            TARGET ${PROJECT_NAME}
             COMMENT "Copy OpenAL DLL"
             PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:collision-detection>
             VERBATIM)
