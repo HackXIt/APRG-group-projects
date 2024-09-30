@@ -208,7 +208,7 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
                 drawableDots.append(dot);
                 points.emplace_back(mousePos.x, mousePos.y);
                 auto index = textWindow.addTextField(mousePos, 0, 30);
-                textWindow.setText(index, "X: " + std::to_string(mousePos.x) + "\nY: " + std::to_string(mousePos.y));
+                textWindow.setText(index, "X: " + formatFloat(mousePos.x, 2) + "\nY: " + formatFloat(mousePos.y, 2));
                 std::cout << "Added point at: (" << mousePos.x << "," << mousePos.y << ")" << std::endl;
                 alg_holder.setInput(points);
             }
