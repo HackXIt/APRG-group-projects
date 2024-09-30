@@ -13,6 +13,13 @@ short check_orientation(ei::Vec2 a, ei::Vec2 b, ei::Vec2 c)
     return (orientation > 0) ? ORIENTATION_CLOCKWISE : ORIENTATION_COUNTERCLOCKWISE;
 }
 
+bool on_segment(ei::Vec2 a, ei::Vec2 b, ei::Vec2 c) 
+{ 
+    return (b.x <= std::max(a.x, c.x) && b.x >= std::min(a.x, c.x) && 
+            b.y <= std::max(a.y, c.y) && b.y >= std::min(a.y, c.y));
+       
+} 
+
 std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
 {
     unsigned int point_count = points.size();
@@ -29,11 +36,14 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
 
     unsigned int current = left;
     unsigned int next;
+
     unsigned int hull_count = 0;
     unsigned int first_hull = 0;
     ei::Vec2 help;
-    do
-    {
+
+    short orientation;
+
+    do {
         hull.push_back(points[current]);
         ++hull_count;
 
@@ -50,14 +60,17 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER points)
 
         for (unsigned int i = 0; i < first_hull; i++)
         {
-            if (check_orientation(points[current], points[i], points[next]) == ORIENTATION_CLOCKWISE)
+            orientation = check_orientation(points[current], points[i], points[next]);
+            if (orientation == ORIENTATION_CLOCKWISE)
+                next = i;
+
+            if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i)
                 next = i;
         }
 
         current = next;
 
-    }
-    while (current != left);
+    } while (current != left);
 
     return hull;
 }
@@ -78,11 +91,14 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
 
     unsigned int current = left;
     unsigned int next;
+
     unsigned int hull_count = 0;
     unsigned int first_hull = 0;
     ei::Vec2 help;
-    do
-    {
+
+    short orientation;
+
+    do {
         //hull.push_back(points[current]);
         ++hull_count;
 
@@ -102,7 +118,12 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
         for (unsigned int i = 0; i < first_hull; i++)
         {
             co_yield points[i];
-            if (check_orientation(points[current], points[i], points[next]) == ORIENTATION_CLOCKWISE)
+
+            orientation = check_orientation(points[current], points[i], points[next]);
+            if (orientation == ORIENTATION_CLOCKWISE)
+                next = i;
+
+            if (orientation == ORIENTATION_COLLINEAR && on_segment(points[current], points[next], points[i]) && current != i)
                 next = i;
         }
 
@@ -110,8 +131,7 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER points)
 
         co_yield points[current];
 
-    }
-    while (current != left);
+    } while (current != left);
 
     co_return;
 }
