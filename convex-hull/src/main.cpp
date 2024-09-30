@@ -10,7 +10,7 @@
 #include "app.h"
 #include "TextWindow.h"
 #include "VisualAlgorithm.h"
-
+#include "Quickhull.h"
 
 int main()
 {
@@ -33,7 +33,8 @@ int main()
     std::vector<ei::Vec2> points;
 
     // Create algorithm holder for step visualization
-    VisualAlgorithm alg_holder(exampleAlgorithm);
+    //VisualAlgorithm alg_holder(exampleAlgorithm);
+    VisualAlgorithm alg_holder(quickHullAlgorithm);
     alg_holder.setFont(font);
 
     // Create TextWindow (for information fields)
