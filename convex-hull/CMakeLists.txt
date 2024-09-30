@@ -15,10 +15,6 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-
-# Add include directories
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include ${CMAKE_CURRENT_LIST_DIR}/epsilon/include)
-
 FILE(GLOB SOURCES src/*.cpp)
 
 # Add the executable target for convex-hull
@@ -29,12 +25,17 @@ add_executable(${PROJECT_NAME}
 # Link libraries if needed
 # target_link_libraries(convex-hull <library-name>)
 # Copy the font file to the build directory
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/FiraCodeNerdFontMono-Retina.ttf
         ${CMAKE_CURRENT_BINARY_DIR}/resources/FiraCodeNerdFontMono-Retina.ttf
         COPYONLY)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics)
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/../extern/epsilon/include
+        cxxopts
+        )
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics cxxopts)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 # On windows we need to copy the DLL to the output path
 if(WIN32)
