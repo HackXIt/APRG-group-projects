@@ -102,7 +102,7 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
         visual->setExplanation("Point cloud has less than 3 points. Convex hull is the point cloud itself.");
         for (const auto& point : points)
         {
-            visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Green));
+            visual->addHullPoint(sf::Vector2f(point.x, point.y));
             visual->addHighlight(sf::Vector2f(point.x, point.y), "P", sf::Color::Blue);
             co_yield visual;
         }
@@ -123,8 +123,7 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
     visual->addHighlight(sf::Vector2f(B.x, B.y), "B (max point)", sf::Color::Red);
     co_yield visual;
 
-    IndicatorLine line_AB(sf::Vector2f(A.x, A.y), sf::Vector2f(B.x, B.y), sf::Color::Red);
-    visual->indicator_lines.push_back(line_AB);
+    visual->addIndicatorLine(sf::Vector2f(A.x, A.y), sf::Vector2f(B.x, B.y), sf::Color::Red);
     visual->setExplanation("Line AB is formed between the minimum and maximum x-coordinates.");
     co_yield visual;
 
@@ -160,9 +159,9 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
 
     // Initialize convex hull with points A and B
     std::vector<ei::Vec2> convexHull = { A, B };
-    visual->current_hull.clear();
-    visual->current_hull.append(sf::Vertex(sf::Vector2f(A.x, A.y), sf::Color::Red));
-    visual->current_hull.append(sf::Vertex(sf::Vector2f(B.x, B.y), sf::Color::Red));
+    visual->clearHullPoints();
+    visual->addHullPoint(sf::Vector2f(A.x, A.y));
+    visual->addHullPoint(sf::Vector2f(B.x, B.y));
     visual->setExplanation("Initializing convex hull with points A and B.");
     co_yield visual;
 
@@ -185,7 +184,7 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
         if (prevC != ei::Vec2{})
             visual->removeHighlight(sf::Vector2f(prevC.x, prevC.y));
 
-        visual->indicator_lines.clear(); // Clear previous indicator lines
+        visual->clearIndicatorLines(); // Clear previous indicator lines
 
         auto [P1, P2, set] = stack.top();
         stack.pop();
@@ -194,7 +193,7 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
         visual->setExplanation("Processing edge between P1 and P2.");
         visual->addHighlight(sf::Vector2f(P1.x, P1.y), "P1", sf::Color::Magenta);
         visual->addHighlight(sf::Vector2f(P2.x, P2.y), "P2", sf::Color::Magenta);
-        visual->indicator_lines.emplace_back(sf::Vector2f(P1.x, P1.y), sf::Vector2f(P2.x, P2.y), sf::Color::Magenta);
+        visual->addIndicatorLine(sf::Vector2f(P1.x, P1.y), sf::Vector2f(P2.x, P2.y), sf::Color::Magenta);
         co_yield visual;
 
         // Update previous P1 and P2
@@ -243,10 +242,10 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
         }
 
         // Visualize updated convex hull
-        visual->current_hull.clear();
+        visual->clearHullPoints();
         for (const auto& point : convexHull)
         {
-            visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Red));
+            visual->addHullPoint(sf::Vector2f(point.x, point.y));
         }
         visual->setExplanation("Inserted point C into convex hull.");
         co_yield visual;
@@ -297,14 +296,14 @@ AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
 
     // Final convex hull visualization
     visual->clearHighlights();
-    visual->indicator_lines.clear();
-    visual->current_hull.clear();
+    visual->clearHighlights();
+    visual->clearHullPoints();
     for (const auto& point : convexHull)
     {
-        visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Red));
+        visual->addHullPoint(sf::Vector2f(point.x, point.y));
     }
     // Close the loop by adding the first point at the end
-    visual->current_hull.append(sf::Vertex(sf::Vector2f(convexHull.front().x, convexHull.front().y), sf::Color::Red));
+    visual->addHullPoint(sf::Vector2f(convexHull.front().x, convexHull.front().y));
     visual->setExplanation("Convex hull construction complete.");
     visual->finished = true;
     co_yield visual;

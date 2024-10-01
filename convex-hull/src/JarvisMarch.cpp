@@ -124,10 +124,10 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points)
         visual->setExplanation("Hull point P selected.");
         convexHull.push_back(points[p]);
         // Visualize current convex hull
-        visual->current_hull.clear();
+        visual->clearHullPoints();
         for (const auto& point : convexHull)
         {
-            visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Red));
+            visual->addHullPoint(sf::Vector2f(point.x, point.y));
         }
         co_yield visual;
 
@@ -144,11 +144,11 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points)
                 continue;
 
             // Clear indicator lines
-            visual->indicator_lines.clear();
+            visual->clearIndicatorLines();
 
             // Draw indicator lines between p-q and p-i
-            visual->indicator_lines.emplace_back(sf::Vector2f(points[p].x, points[p].y), sf::Vector2f(points[q].x, points[q].y), sf::Color::Blue);
-            visual->indicator_lines.emplace_back(sf::Vector2f(points[p].x, points[p].y), sf::Vector2f(points[i].x, points[i].y), sf::Color::Green);
+            visual->addIndicatorLine(sf::Vector2f(points[p].x, points[p].y), sf::Vector2f(points[q].x, points[q].y), sf::Color::Blue);
+            visual->addIndicatorLine(sf::Vector2f(points[p].x, points[p].y), sf::Vector2f(points[i].x, points[i].y), sf::Color::Green);
 
             // Highlight point i being considered
             visual->addHighlight(sf::Vector2f(points[i].x, points[i].y), "Probe I", sf::Color::Cyan);
@@ -174,7 +174,7 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points)
         }
 
         // Clear after comparisons
-        visual->indicator_lines.clear();
+        visual->clearIndicatorLines();
         visual->clearHighlights();
 
         // Move to next point
@@ -188,14 +188,14 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points)
 
     // Final convex hull visualization
     visual->clearHighlights();
-    visual->indicator_lines.clear();
-    visual->current_hull.clear();
+    visual->clearIndicatorLines();
+    visual->clearHullPoints();
     for (const auto& point : convexHull)
     {
-        visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Red));
+        visual->addHullPoint(sf::Vector2f(point.x, point.y));
     }
     // Close the loop by adding the first point at the end
-    visual->current_hull.append(sf::Vertex(sf::Vector2f(convexHull.front().x, convexHull.front().y), sf::Color::Red));
+    visual->addHullPoint(sf::Vector2f(convexHull.front().x, convexHull.front().y));
     visual->setExplanation("Convex hull construction complete.");
     visual->finished = true;
     co_yield visual;
