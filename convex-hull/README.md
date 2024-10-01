@@ -8,7 +8,7 @@ This project implements and visualizes various convex hull algorithms, specifica
 
 - **QuickHull**
 - **Jarvis March**
-- **Divide & Conquer** _(not implemented yet)_
+- **Divide & Conquer**
 
 The program provides both a graphical user interface (GUI) for visualization and a command-line interface (CLI) for performance testing.
 
@@ -16,7 +16,7 @@ The program provides both a graphical user interface (GUI) for visualization and
 
 - **Algorithm Visualization**: Step-by-step visualization of convex hull algorithms for educational purposes.
 - **CLI Mode**: Run algorithms on large datasets for performance measurement.
-- **Test Data Generation**: Python scripts to generate test datasets with various point distributions.
+- **Data Generation**: Built-in functions to generate test datasets with various point distributions.
 - **Automated Testing**: Scripts to execute algorithms on test datasets and log the results.
 
 ## Installation
@@ -37,61 +37,113 @@ To build and run the program, you need:
 
 2. **Run CMake Configuration:**
 
-    ```bash
+   ```bash
    # Optional: Create a build directory
-    mkdir build && cd build
-    cmake ..
-    ```
+   mkdir build && cd build
+   cmake ..
+   ```
 
 3. **Navigate to the Sub-Project inside the build directory:**
 
-    ```bash
-    cd convex-hull
-    ```
+   ```bash
+   cd convex-hull
+   ```
 
-4. Build the Project:
+4. **Build the Project:**
 
-    ```bash
-    cmake --build .
-    ```
-   
-The executable will be located in the bin directory.
+   ```bash
+   cmake --build .
+   ```
+
+The executable will be located in the `bin` directory.
 
 ## Usage
 
 The program can be run in two modes:
 
- - GUI Mode: For visualization _(limited to a maximum of **50 data points**)_.
- - CLI Mode: For performance testing on larger datasets.
+- **GUI Mode**: For visualization _(limited to a maximum of **50 data points**)_.
+- **CLI Mode**: For performance testing on larger datasets.
 
 ### Command-Line Interface (CLI)
 
-The CLI allows you to execute the convex hull algorithms on specified datasets.
+The CLI allows you to execute the convex hull algorithms on specified or generated datasets.
 
 #### Syntax
 
 ```bash
-convex-hull.exe [OPTIONS] data_file
+convex-hull.exe [OPTIONS]
 ```
 
 #### Options
- * `-h`, `--help`: Print help message.
- * `-g`, `--gui`: Run with visualization using pre-loaded data (limited to less than 50 points).
- * `-d`, `--data_file FILEPATH`: Path to a file containing points to load.
- * `-a`, `--algorithm MODE`: Algorithm to use. 
-   * `0`: QuickHull
-   * `1`: Jarvis March
-   * `2`: Divide & Conquer.
 
-#### Data File Format
- * First Line: Contains the number of points (integer). 
- * Subsequent Lines: Each line contains the X and Y coordinates of a point, space-separated (floating-point values).
+- `-h`, `--help`: Print help message.
+- `-g`, `--gui`: Run with visualization using pre-loaded or generated data (limited to less than 50 points).
+- `-a`, `--algorithm MODE`: Algorithm to use.
+   - `0`: QuickHull
+   - `1`: Jarvis March
+   - `2`: Divide & Conquer
+- **Data Input Options** _(Mutually Exclusive)_:
+   - `-d`, `--data_file FILEPATH`: Path to a file containing points to load.
+   - `-t`, `--test CASE`: Generate test data for the specified test case.
+      - Valid test cases: `0` to `4`.
+   - `-n`, `--number N`: Number of points to generate for the test case (used with `-t`). Default is `100`.
 
-#### Example
+**Note:** You must specify either `--data_file` or `--test` when running in CLI mode unless you are running the GUI without pre-loaded data.
 
-```bash
-convex-hull.exe -a 0 -d "path/to/data_file.txt"
-```
+#### Data Input Options Details
+
+- **`--data_file FILEPATH`**: Load data points from a file.
+
+   - **File Format**:
+      - **First Line**: Contains the number of points (integer).
+      - **Subsequent Lines**: Each line contains the X and Y coordinates of a point, space-separated (floating-point values).
+
+- **`--test CASE`**: Generate data points for a predefined test case.
+
+   - **Test Cases**:
+      - `0`: Random distribution of points.
+      - `1`: Points forming a straight line.
+      - `2`: Points forming a circle.
+      - `3`: Random distribution inside a square (convex hull forms a square).
+      - `4`: Large dataset with 100 million data points.
+
+- **`--number N`**: Specify the number of points to generate for the test case (used with `--test`).
+
+#### Examples
+
+- **Run QuickHull Algorithm on Data File**:
+
+  ```bash
+  convex-hull.exe -a 0 -d "path/to/data_file.txt"
+  ```
+
+- **Generate Test Case 2 (Circle) with 500 Points and Run Jarvis March Algorithm**:
+
+  ```bash
+  convex-hull.exe -a 1 -t 2 -n 500
+  ```
+
+- **Run GUI with QuickHull Algorithm and No Pre-loaded Data**:
+
+  ```bash
+  convex-hull.exe -g -a 0
+  ```
+
+- **Run GUI with Generated Test Case 1 (Straight Line) Data**:
+
+  ```bash
+  convex-hull.exe -g -a 0 -t 1 -n 30
+  ```
+
+#### Important Notes
+
+- **Mutual Exclusivity**:
+   - The options `--data_file` (`-d`) and `--test` (`-t`) are mutually exclusive. You cannot use them together.
+   - If neither `--data_file` nor `--test` is provided, the program will run the GUI without pre-loaded data (you can add points manually).
+
+- **Visualization Limit**:
+   - The GUI mode is limited to datasets with fewer than **50 points**.
+   - If your dataset exceeds this limit, use CLI mode for performance testing.
 
 ### Graphical User Interface (GUI)
 
@@ -100,65 +152,71 @@ The GUI provides a step-by-step visualization of the convex hull algorithms.
 #### Running in GUI Mode
 
 ```bash
-convex-hull.exe -g -a 0 -d "path/to/data_file.txt"
+convex-hull.exe -g -a 0
 ```
 
-**Note:** The GUI mode is limited to datasets with fewer than 50 points.
+You can optionally provide data using `--data_file` or generate data using `--test` and `--number`:
+
+- **With Data File**:
+
+  ```bash
+  convex-hull.exe -g -a 0 -d "path/to/data_file.txt"
+  ```
+
+- **With Generated Test Data**:
+
+  ```bash
+  convex-hull.exe -g -a 0 -t 0 -n 40
+  ```
+
+**Note:** The dataset must contain fewer than **50 points** for visualization.
 
 ##### Controls
- * `SPACE`: Step through the algorithm with visual explanation.
- * `R`: Reset the visualization.
- * `ENTER`: Run the algorithm to completion. *(1)
- * `Click in UI`: Place points manually. *(1)
 
-_*(1) Only possible if calculation has not started yet. If calculation already started, a reset is required._
+- `SPACE`: Step through the algorithm with visual explanation.
+- `R`: Reset the visualization.
+- `ENTER`: Run the algorithm to completion. *(1)*
+- `Click in UI`: Place points manually. *(1)*
 
-### Test Data Generator
+_(1) Only possible if calculation has not started yet. If calculation already started, a reset is required._
 
-The project includes Python scripts to generate test datasets with various point distributions.
+### Test Data Generation
 
-#### Generating Test Data
+The program includes built-in functions to generate test datasets with various point distributions using the `--test` and `--number` options.
 
-The test data generator creates datasets with the following configurations:
+#### Available Test Cases
 
- - Random Distribution of Points
- - Points Forming a Straight Line
- - Points Forming a Circle
- - Random Distribution Inside a Square
- - Large Dataset with 100 Million Points
+- **Test Case 0**: Random distribution of points.
+- **Test Case 1**: Points forming a straight line.
+- **Test Case 2**: Points forming a circle.
+- **Test Case 3**: Random distribution inside a square (convex hull forms a square).
+- **Test Case 4**: Large dataset with 100 million data points.
 
-**Script:** [`generate_test_data.py`](test/generate_test_data.py)
+#### Generating Test Data Example
 
-The `generate_test_data.py` script contains functions to generate different types of test data. You can find the script in the repository under the scripts directory.
+- **Generate 1000 Random Points (Test Case 0) and Run QuickHull Algorithm**:
 
-##### Example Usage
+  ```bash
+  convex-hull.exe -a 0 -t 0 -n 1000
+  ```
 
-```bash
-python generate_test_data.py
-```
+- **Generate 100 Million Points (Test Case 4) and Run Divide & Conquer Algorithm**:
 
-Note: Modify the script as needed to generate different datasets.
+  ```bash
+  convex-hull.exe -a 2 -t 4 -n 100000000
+  ```
 
-##### Data Files Naming Convention
+**Note:** Generating large datasets may require significant system resources.
 
-Test data files are named using the pattern:
-
-```
-TC_<TestName>_<DataPoints>.txt
-```
-
-For example:
-
- * `TC_RandomPoints_10.txt`
- * `TC_CirclePoints_1000.txt`
-
-#### Test Script
+### Automated Testing
 
 Automated testing is facilitated using a PowerShell script.
 
+#### Test Script
+
 **PowerShell Script:** [`run_tests.ps1`](test/run_tests.ps1)
 
-The PowerShell script executes the compiled binary with the generated test data files and logs the results.
+The PowerShell script executes the compiled binary with generated test data and logs the results.
 
 ##### Usage
 
@@ -168,37 +226,23 @@ The PowerShell script executes the compiled binary with the generated test data 
 
 ##### Script Overview
 
- * Parameters:
-   * -BinaryPath: Full path to the convex-hull.exe executable.
- * Functionality:
-   * Iterates over all test data files matching TC_*.txt.
-   * Executes the convex hull algorithms (0: QuickHull, 1: Jarvis March, 2: Divide & Conquer) on each test file.
-   * Logs the output and errors to test.log.
+- **Parameters**:
+   - `-BinaryPath`: Full path to the `convex-hull.exe` executable.
+- **Functionality**:
+   - Iterates over all specified test cases and algorithms.
+   - Executes the convex hull algorithms (`0`: QuickHull, `1`: Jarvis March, `2`: Divide & Conquer) on each test case.
+   - Logs the output and errors to `test.log`.
 
 ##### Example Execution
 
 ```powershell
-
-# Navigate to the directory containing the script and test data files
+# Navigate to the directory containing the script
 cd C:\path\to\scripts
 
 # Run the test script
 .\run_tests.ps1 -BinaryPath "C:\path\to\convex-hull.exe"
 ```
 
-##### Examples
-
- - Running QuickHull Algorithm on a Dataset
-    ```bash
-    convex-hull.exe -a 0 -d "TC_RandomPoints_1000.txt"
-    ```
-
- - Running Jarvis March Algorithm with Visualization
-
-    ```bash
-    convex-hull.exe -g -a 1 -d "TC_CirclePoints_10.txt"
-    ```
-
-# License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
