@@ -1,12 +1,14 @@
 #include "JarvisMarch.h"
 
+const float eps = 0.000001;
+
 short check_orientation(ei::Vec2 a, ei::Vec2 b, ei::Vec2 c)
 {
-    int orientation = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
+    float orientation = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
 
-    if (orientation == 0)
+    if (orientation <= 0.0f + eps && orientation >= 0.0f - eps)
         return ORIENTATION_COLLINEAR;
-    return (orientation > 0) ? ORIENTATION_CLOCKWISE : ORIENTATION_COUNTERCLOCKWISE;
+    return (orientation > 0.0f) ? ORIENTATION_CLOCKWISE : ORIENTATION_COUNTERCLOCKWISE;
 }
 
 bool on_segment(ei::Vec2 a, ei::Vec2 b, ei::Vec2 c) 
@@ -50,6 +52,8 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER& points)
             help = points[first_hull];
             points[first_hull] = points[current];
             points[current] = help;
+            if (first_hull == left)
+                left = current;
             current = first_hull;
         }
 
