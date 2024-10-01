@@ -45,3 +45,43 @@ if(WIN32)
             PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${SFML_SOURCE_DIR}/extlibs/bin/$<IF:$<EQUAL:${CMAKE_SIZEOF_VOID_P},8>,x64,x86>/openal32.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>
             VERBATIM)
 endif()
+
+# -------------------------------------------------------------------------
+# Add a custom target 'run_tests' to execute the compiled binary with all
+# variations of test cases using the generator mode.
+# -------------------------------------------------------------------------
+
+# Define variables for test cases, algorithms, and data points
+set(TEST_CASES 0 1 2 3 4)
+set(ALGORITHMS 0 1)
+set(DATA_POINTS 10 50 1000 1000000 100000000)
+
+# Get the path to the convex-hull executable
+set(CONVEX_HULL_EXECUTABLE $<TARGET_FILE:${PROJECT_NAME}>)
+
+# List to collect all test targets
+set(TEST_TARGETS)
+
+# Iterate over all combinations of test cases, algorithms, and data points
+foreach(TEST_CASE ${TEST_CASES})
+    foreach(ALGORITHM ${ALGORITHMS})
+        foreach(NUM_POINTS ${DATA_POINTS})
+            # Create a unique name for the test target
+            set(TEST_TARGET_NAME test_tc${TEST_CASE}_alg${ALGORITHM}_n${NUM_POINTS})
+            # Create the custom target for this test
+            add_custom_target(${TEST_TARGET_NAME}
+                    COMMAND ${CONVEX_HULL_EXECUTABLE} -a ${ALGORITHM} -t ${TEST_CASE} -n ${NUM_POINTS}
+                    DEPENDS ${PROJECT_NAME}
+                    COMMENT "Running test case ${TEST_CASE}, algorithm ${ALGORITHM}, data points ${NUM_POINTS}"
+            )
+            # Add this test target to the list
+            list(APPEND TEST_TARGETS ${TEST_TARGET_NAME})
+        endforeach()
+    endforeach()
+endforeach()
+
+# Add the 'run_tests' target that depends on all individual test targets
+add_custom_target(run_tests
+        DEPENDS ${TEST_TARGETS}
+        COMMENT "Running all tests..."
+)
