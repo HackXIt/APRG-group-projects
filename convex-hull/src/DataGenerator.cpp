@@ -16,8 +16,6 @@ std::vector<ei::Vec2> DataGenerator::GeneratePoints(Generator generator, size_t 
             return GenerateCircle(numPoints);
         case SQUARE:
             return GeneratePointsInSquare(numPoints);
-        case LARGE_DATASET:
-            return GenerateLargeDataset(numPoints);
         default:
             throw std::invalid_argument("Invalid generator type.");
     }
@@ -97,25 +95,6 @@ std::vector<ei::Vec2> DataGenerator::GeneratePointsInSquare(size_t numPoints) {
     for (size_t i = 0; i < numPoints; ++i) {
         float x = x0 + dist(gen);
         float y = y0 + dist(gen);
-        points.emplace_back(x, y);
-    }
-
-    return points;
-}
-
-// 5. Generate a large dataset of 100 million data points.
-std::vector<ei::Vec2> DataGenerator::GenerateLargeDataset(size_t numPoints) {
-    std::vector<ei::Vec2> points;
-    points.reserve(numPoints);
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> x_dist(0.0f, static_cast<float>(WINDOW_DEFAULT_WIDTH));
-    std::uniform_real_distribution<float> y_dist(0.0f, static_cast<float>(WINDOW_DEFAULT_HEIGHT));
-
-    for (size_t i = 0; i < numPoints; ++i) {
-        float x = x_dist(gen);
-        float y = y_dist(gen);
         points.emplace_back(x, y);
     }
 

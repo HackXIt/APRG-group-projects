@@ -132,7 +132,8 @@ std::vector<ei::Vec2> LoadDataFromFile(const std::string& filename) {
 }
 
 std::vector<ei::Vec2> GenerateData(int test_case, int num_points) {
-    std::cout << "Generating data for test case " << test_case << " with " << num_points << " points..." << std::endl;
+    std::cout << "Generating data for test case " << generatorToString(static_cast<Generator>(test_case))
+        << " with " << num_points << " points..." << std::endl;
     const auto start = std::chrono::high_resolution_clock::now();
     std::vector<ei::Vec2> points = DataGenerator::GeneratePoints(static_cast<Generator>(test_case), num_points);
     const auto end = std::chrono::high_resolution_clock::now();
@@ -240,7 +241,9 @@ int main(int argc, char *argv[]) {
         }
         return gui_main(algorithm, &points);
     }
-    return console_main(algorithm, points);
+    auto exit_code =  console_main(algorithm, points);
+    points.clear();
+    return exit_code;
 }
 
 int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)

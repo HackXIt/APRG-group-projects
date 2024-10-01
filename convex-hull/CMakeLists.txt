@@ -52,9 +52,9 @@ endif()
 # -------------------------------------------------------------------------
 
 # Define variables for test cases, algorithms, and data points
-set(TEST_CASES 0 1 2 3 4)
+set(TEST_CASES 0 1 2 3)
 set(ALGORITHMS 0 1)
-set(DATA_POINTS 10 50 1000 1000000 100000000)
+set(DATA_POINTS 10 50 10000)
 
 # Get the path to the convex-hull executable
 set(CONVEX_HULL_EXECUTABLE $<TARGET_FILE:${PROJECT_NAME}>)

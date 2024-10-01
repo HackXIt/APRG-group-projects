@@ -1,4 +1,4 @@
-﻿# PowerShell script to run convex hull algorithms on test files
+﻿# PowerShell script to run all test variations for the convex hull executable with a timeout
 # Save this script as run_tests.ps1
 
 Param (
@@ -23,8 +23,7 @@ $BinaryDirectory = Split-Path -Path $BinaryPath -Parent
 # Set the log file name
 if (-not $LogFile) {
     $LogFile = Join-Path -Path $BinaryDirectory -ChildPath "test.log"
-} else
-{
+} else {
     $LogFile = Resolve-Path -Path $LogFile | Select-Object -ExpandProperty Path
 }
 
@@ -33,6 +32,32 @@ if (Test-Path $LogFile) {
     Remove-Item $LogFile
 }
 
+# Define the maximum execution time per test (in seconds)
+$MaxExecutionTime = 300  # 5 minutes
+
+# Configuration: Define dictionaries for test cases and algorithms with descriptive names
+$TestCases = @{
+    0 = "random"
+    1 = "line"
+    2 = "circle"
+    3 = "square"
+}
+
+$Algorithms = @{
+    0 = "quick-hull"
+    1 = "jarvis-march"
+}
+
+# Configuration: Adjust the number of data points per test case
+# Each test case can have different data point values
+$DataPoints = @{
+    0 = 10, 50, 10000, 100000, 1000000, 10000000, 100000000                 # Data points for test case 0 ("random")
+    1 = 10, 50, 10000, 50000, 100000, 1000000             # Data points for test case 1 ("line")
+    2 = 10, 50, 10000, 50000, 100000     # Data points for test case 2 ("circle")
+    3 = 10, 50, 10000, 50000, 100000, 1000000         # Data points for test case 3 ("square")
+}
+
+# Function to escape arguments if needed
 function Escape-Argument($arg) {
     if ($arg -match '[\s"]') {
         return '"' + ($arg -replace '"', '""') + '"'
@@ -41,83 +66,73 @@ function Escape-Argument($arg) {
     }
 }
 
-# Get all test files matching the pattern TC_*.txt in the current directory
-$CurrentDirectory = Get-Location
-$TestFiles = Get-ChildItem -Path $CurrentDirectory -Filter "TC_*.txt"
+# Loop over all combinations of test cases, algorithms, and data points
+foreach ($TestCase in $TestCases.Keys) {
+    if ($DataPoints.ContainsKey($TestCase)) {
+        foreach ($NumPoints in $DataPoints[$TestCase]) {
+            foreach ($Algorithm in $Algorithms.Keys) {
 
-foreach ($TestFile in $TestFiles) {
-    # Resolve the full path of the test file
-    $TestFileFullPath = Resolve-Path -Path $TestFile.FullName | Select-Object -ExpandProperty Path
+                # Get descriptive names for the test case and algorithm
+                $TestCaseName = $TestCases[$TestCase]
+                $AlgorithmName = $Algorithms[$Algorithm]
 
-    # Extract the test name and number of points from the filename
-    # Filename format: TC_<TestName>_<DataPoints>.txt
-    $FileName = $TestFile.BaseName
-    $FileNameWithoutPrefix = $FileName -replace "^TC_", ""
-    $Parts = $FileNameWithoutPrefix -split "_"
+                # Prepare the arguments for each test run
+                $ArgumentList = @("-a", "$Algorithm", "-t", "$TestCase", "-n", "$NumPoints")
+                $EscapedArguments = $ArgumentList | ForEach-Object { Escape-Argument $_ }
+                $ArgumentsString = $EscapedArguments -join ' '
 
-    $TestName = $null
-    $NumPoints = $null
+                # Write header to the log file
+                Add-Content -Path $LogFile -Value "========================================================================="
+                Add-Content -Path $LogFile -Value "Running test case: $TestCase ($TestCaseName), algorithm: $Algorithm ($AlgorithmName), data points: $NumPoints"
+                Add-Content -Path $LogFile -Value "========================================================================="
 
-    if ($Parts.Count -eq 2) {
-        $TestName = $Parts[0]
-        $NumPoints = [int]$Parts[1]
-    } elseif ($Parts.Count -eq 1) {
-        $TestName = $Parts[0]
-        # Handle special cases like TC_LargeDataset
-        if ($TestName -eq "LargeDataset") {
-            $NumPoints = 100000000
-        } else {
-            $NumPoints = 0
+                # Start the process for each test configuration
+                Write-Host "Running test case: $TestCase ($TestCaseName), algorithm: $Algorithm ($AlgorithmName), data points: $NumPoints"
+
+                $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+                $StartInfo.FileName = $BinaryPath
+                $StartInfo.Arguments = $ArgumentsString
+                $StartInfo.WorkingDirectory = $BinaryDirectory
+                $StartInfo.UseShellExecute = $false
+                $StartInfo.RedirectStandardOutput = $true
+                $StartInfo.RedirectStandardError = $true
+
+                $Process = New-Object System.Diagnostics.Process
+                $Process.StartInfo = $StartInfo
+
+                # Start the timer
+                $Timer = [System.Diagnostics.Stopwatch]::StartNew()
+                $Process.Start() | Out-Null
+
+                # Track process execution time and forcefully terminate if it exceeds the limit
+                $Exited = $Process.WaitForExit($MaxExecutionTime * 1000)
+
+                if (-not $Exited) {
+                    # Process exceeded the time limit, kill it and log a warning
+                    $Process.Kill()
+                    Write-Warning "Test case $TestCase ($TestCaseName), algorithm $Algorithm ($AlgorithmName), data points $NumPoints exceeded the time limit and was terminated."
+                    Add-Content -Path $LogFile -Value "WARNING: Test case $TestCase ($TestCaseName), algorithm $Algorithm ($AlgorithmName), data points $NumPoints exceeded the time limit and was terminated."
+                } else {
+                    # Read output
+                    $StdOut = $Process.StandardOutput.ReadToEnd()
+                    $StdErr = $Process.StandardError.ReadToEnd()
+                    $Process.WaitForExit()
+
+                    # Append output to log file
+                    Add-Content -Path $LogFile -Value $StdOut
+                    Add-Content -Path $LogFile -Value $StdErr
+                }
+
+                # Log the execution time
+                Add-Content -Path $LogFile -Value "Execution time: $($Timer.Elapsed.TotalSeconds) seconds."
+
+                # Add a blank line to the log file
+                Add-Content -Path $LogFile -Value ""
+            }
         }
     } else {
-        Write-Warning "Filename format not recognized: $($TestFile.Name)"
-        continue
-    }
-
-    # Loop over algorithms (0: QuickHull, 1: Jarvis March, 2: Divide & Conquer)
-    foreach ($Algorithm in 0,1) {
-        # Prepare the arguments
-        # Ensure test file path is full path
-        $TestFilePath = $TestFileFullPath
-
-        # Prepare the argument list
-        $ArgumentList = @("-a", "$Algorithm", "-d", "$TestFilePath")
-
-        # Escape arguments
-        $EscapedArguments = $ArgumentList | ForEach-Object { Escape-Argument $_ }
-        $ArgumentsString = $EscapedArguments -join ' '
-
-        # Write header to the log file
-        Add-Content -Path $LogFile -Value "========================================================================="
-        Add-Content -Path $LogFile -Value "Running test file: $($TestFile.Name) with algorithm $Algorithm"
-        Add-Content -Path $LogFile -Value "========================================================================="
-
-        # Start the process
-        Write-Host "Running test file: $($TestFile.Name) with algorithm $Algorithm"
-
-        $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-        $StartInfo.FileName = $BinaryPath
-        $StartInfo.Arguments = $ArgumentsString
-        # Set WorkingDirectory to the current directory (where test files are)
-        $StartInfo.WorkingDirectory = $CurrentDirectory.Path
-        $StartInfo.UseShellExecute = $false
-        $StartInfo.RedirectStandardOutput = $true
-        $StartInfo.RedirectStandardError = $true
-
-        $Process = New-Object System.Diagnostics.Process
-        $Process.StartInfo = $StartInfo
-        $Process.Start() | Out-Null
-
-        # Read output
-        $StdOut = $Process.StandardOutput.ReadToEnd()
-        $StdErr = $Process.StandardError.ReadToEnd()
-        $Process.WaitForExit()
-
-        # Append output to log file
-        Add-Content -Path $LogFile -Value $StdOut
-        Add-Content -Path $LogFile -Value $StdErr
-
-        # Add a blank line to the log file
-        Add-Content -Path $LogFile -Value ""
+        Write-Warning "No data points defined for test case $TestCase ($TestCaseName). Skipping..."
     }
 }
+
+Write-Host "All tests executed. Check the log file at: $LogFile"
