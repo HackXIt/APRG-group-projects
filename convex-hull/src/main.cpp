@@ -19,28 +19,20 @@ int main(int argc, char *argv[])
     if (argc == 1)
     {
         // Just run the GUI if there's no arguments
-        return gui_main(JARVIS_MARCH);
+        return gui_main(QUICK_HULL);
     }
 
     // Configure CLI options
     cxxopts::Options options("convex-hull", "Convex Hull Algorithms Visualization and Performance Test by Group (Nikolaus, Markus, Marius)");
 
     options.add_options()
-        ("h,help",
-            "Print help")
-        ("g,gui",
-            "Run with visualization using pre-loaded data (limited to less than 50 points)",
-            cxxopts::value<bool>()->default_value("false"),
-            "FLAG (bool)")
-        ("d,data_file",
-            "Path to a file containing points to load\n 1st line == amount of data points\n line 2...n+1 == points with x,y coordinates (space-seperated)",
-            cxxopts::value<std::string>(),
-            "FILEPATH (string)")
-        ("a,algorithm",
-            "Algorithm to use as integer. 0: QuickHull, 1: Jarvis March, 2: Divide & Conquer",
-            cxxopts::value<int>()->default_value("0"),
-            "MODE (int)");
-    options.parse_positional({"data_file"});
+        ("h,help", "Print help")
+        ("g,gui", "Run with visualization using pre-loaded data (limited to less than 50 points)", cxxopts::value<bool>()->default_value("false"))
+        ("d,data_file", "Path to a file containing points to load", cxxopts::value<std::string>())
+        ("a,algorithm", "Algorithm to use as integer. 0: QuickHull, 1: Jarvis March, 2: Divide & Conquer", cxxopts::value<int>()->default_value("0"));
+
+    options.parse_positional("data_file");
+    options.positional_help("data_file");
 
     // Parse CLI
     cxxopts::ParseResult result;
@@ -51,6 +43,7 @@ int main(int argc, char *argv[])
     catch (const cxxopts::exceptions::parsing &e)
     {
         std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -62,47 +55,92 @@ int main(int argc, char *argv[])
     }
 
     // Handle mode
-    auto mode = result["algorithm"].as<int>();
+    int mode = 0;
+    try
+    {
+        mode = result["algorithm"].as<int>();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error parsing algorithm mode: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
     if (mode < 0 || mode > 2)
     {
         std::cerr << "Invalid algorithm mode: " << mode << std::endl << "Valid modes are: 0: QuickHull, 1: Jarvis March, 2: Divide & Conquer" << std::endl;
         return EXIT_FAILURE;
     }
-    auto algorithm = static_cast<Algorithm>(mode);
+    Algorithm algorithm = static_cast<Algorithm>(mode);
 
-    // Handle file
+    // Check if data_file is provided
+    if (!result.count("data_file"))
+    {
+        std::cerr << "Error: No data file specified." << std::endl;
+        std::cerr << options.help() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string filename = result["data_file"].as<std::string>();
+
+    // Load data file
     std::cout << "Loading data file..." << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
-    auto filename = result["data_file"].as<std::string>();
-    std::string line;
+
     std::ifstream data_file(filename);
-    if(!data_file.is_open())
+    if (!data_file.is_open())
     {
         std::cerr << "Error opening file: " << filename << std::endl;
         return EXIT_FAILURE;
     }
-    std::getline(data_file, line);
-    int num_points = std::stoi(line);
-    std::vector<ei::Vec2> points;
-    for(int i = 0; i < num_points; i++)
+
+    std::string line;
+    if (!std::getline(data_file, line))
     {
-        std::getline(data_file, line);
+        std::cerr << "Error reading from file: " << filename << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    int num_points = 0;
+    try
+    {
+        num_points = std::stoi(line);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error parsing number of points: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::vector<ei::Vec2> points;
+    for (int i = 0; i < num_points; i++)
+    {
+        if (!std::getline(data_file, line))
+        {
+            std::cerr << "Error reading point data from file: " << filename << std::endl;
+            return EXIT_FAILURE;
+        }
         std::istringstream iss(line);
         float x, y;
-        iss >> x >> y;
+        if (!(iss >> x >> y))
+        {
+            std::cerr << "Error parsing point data on line " << i + 2 << std::endl;
+            return EXIT_FAILURE;
+        }
         points.emplace_back(x, y);
     }
+    data_file.close();
+
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Loaded " << num_points << " points from file: " << filename << std::endl;
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-    data_file.close();
 
     // Run program
-    if (result.count("gui"))
+    if (result["gui"].as<bool>())
     {
-        if(points.size() >= VISUALIZATION_POINTS_LIMIT)
+        if (points.size() >= VISUALIZATION_POINTS_LIMIT)
         {
-            std::cerr << "Too many points for visualization (Max: "<< VISUALIZATION_POINTS_LIMIT <<"). Please use console mode." << std::endl;
+            std::cerr << "Too many points for visualization (Max: " << VISUALIZATION_POINTS_LIMIT << "). Please use console mode." << std::endl;
             return EXIT_FAILURE;
         }
         return gui_main(algorithm, &points);
