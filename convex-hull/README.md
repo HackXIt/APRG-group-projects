@@ -243,6 +243,20 @@ cd C:\path\to\scripts
 .\run_tests.ps1 -BinaryPath "C:\path\to\convex-hull.exe"
 ```
 
+##### O Notation
+
+**Jarvis March**
+
+- Best-Case: Line or Square Hull O(N)
+- Average-Case: O(M*N)
+- Worst-Case: Circle Although a bit optimised, still O(N^2) technically
+
+**QuickHull**
+
+- Best-Case: O(n) when hull points are low 
+- Average-Case: O(N Log(N))
+- Worst-Case: Circle O(N^2)
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](../LICENSE) file for details.
