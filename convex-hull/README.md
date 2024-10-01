@@ -1,5 +1,7 @@
 ﻿# Convex Hull Algorithms Visualization and Performance Test
 
+![](showcase/Convex-Hull_Algorithm-Visualization.mp4)
+
 ## Introduction
 
 This project implements and visualizes various convex hull algorithms, specifically:
