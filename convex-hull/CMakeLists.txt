@@ -34,7 +34,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/../extern/epsilon/include
         cxxopts
         )
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics cxxopts)
+target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics cxxopts -static-libgcc -static-libstdc++)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 # On windows we need to copy the DLL to the output path
