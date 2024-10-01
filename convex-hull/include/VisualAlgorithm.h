@@ -123,6 +123,10 @@ struct Visual
     {
         indicator_lines.emplace_back(start, end, color);
     }
+    void addHullPoint(const sf::Vector2f& position, const sf::Color& color = sf::Color::Red)
+    {
+        current_hull.append(sf::Vertex(position, color));
+    }
     void removeHighlight(const sf::Vector2f& position)
     {
         std::erase_if(highlights, [position](const Highlight& highlight) {
@@ -146,6 +150,10 @@ struct Visual
     void clearIndicatorLines()
     {
         indicator_lines.clear();
+    }
+    void clearHullPoints()
+    {
+        current_hull.clear();
     }
     void draw(sf::RenderWindow& window) const
     {
