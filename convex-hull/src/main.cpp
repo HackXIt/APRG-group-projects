@@ -134,12 +134,12 @@ int main(int argc, char *argv[])
 
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Loaded " << num_points << " points from file: " << filename << std::endl;
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
 
     // Run program
     if (result["gui"].as<bool>())
     {
-        if (points.size() >= VISUALIZATION_POINTS_LIMIT)
+        if (points.size() > VISUALIZATION_POINTS_LIMIT)
         {
             std::cerr << "Too many points for visualization (Max: " << VISUALIZATION_POINTS_LIMIT << "). Please use console mode." << std::endl;
             return EXIT_FAILURE;
@@ -168,13 +168,13 @@ int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Convex Hull Points: " << hull.size() << std::endl;
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " microseconds" << std::endl;
     return EXIT_SUCCESS;
 }
 
 int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
 {
-    sf::RenderWindow window(sf::VideoMode(WINDOW_DEFAULT_HEIGHT, WINDOW_DEFAULT_HEIGHT), "APRG - Convex Hull");
+    sf::RenderWindow window(sf::VideoMode(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT), "APRG - Convex Hull");
     // Center position (for resetting shape positions)
     sf::Vector2f windowCenter = {WINDOW_DEFAULT_WIDTH / 2.f, WINDOW_DEFAULT_HEIGHT / 2.f};
 
@@ -220,6 +220,7 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
             auto index = textWindow.addTextField(sf::Vector2f(point.x, point.y), 0, 30);
             textWindow.setText(index, "X: " + std::to_string(point.x) + "\nY: " + std::to_string(point.y));
         }
+        alg_holder.setInput(points);
     }
 
     // Main loop
