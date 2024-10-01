@@ -63,6 +63,24 @@ void findHull(std::vector<ei::Vec2>& hull, const std::vector<ei::Vec2>& set,
     findHull(hull, leftSetCQ, C, Q);
 }
 
+std::vector<ei::Vec2> quick_hull_performance(const INPUT_PARAMETER& points)
+{
+    if (points.size() < 3)
+    {
+        return points;
+    }
+
+    auto minmaxX = std::minmax_element(points.begin(), points.end(),
+        [](const ei::Vec2& a, const ei::Vec2& b) { return a.x < b.x; });
+
+    ei::Vec2 A = *minmaxX.first;
+    ei::Vec2 B = *minmaxX.second;
+
+    std::vector<ei::Vec2> hull;
+    findHull(hull, points, A, B);
+    return hull;
+}
+
 AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
 {
     auto visual = std::make_shared<Visual>();
