@@ -1,6 +1,9 @@
 ﻿#include <memory>
 
 #include "QuickHull.h"
+#include <stack>
+
+
 
 inline int pointLocation(const ei::Vec2& A, const ei::Vec2& B, const ei::Vec2& P) {
     float cp1 = (B.x - A.x)*(P.y - A.y) - (B.y - A.y)*(P.x - A.x);
@@ -12,85 +15,52 @@ inline int pointLocation(const ei::Vec2& A, const ei::Vec2& B, const ei::Vec2& P
         return -1;
 }
 
-inline float distanceFromLine(const ei::Vec2& A, const ei::Vec2& B, const ei::Vec2& P) {
+float distanceSquaredFromLine(const ei::Vec2& A, const ei::Vec2& B, const ei::Vec2& P) {
+    float N = (B.y - A.y) * P.x - (B.x - A.x) * P.y + B.x * A.y - B.y * A.x;
+    float D_squared = (B.y - A.y) * (B.y - A.y) + (B.x - A.x) * (B.x - A.x);
+    return (N * N) / D_squared;
+}
+
+float distanceFromLine(const ei::Vec2& A, const ei::Vec2& B, const ei::Vec2& P) {
     float num = std::abs((B.y - A.y)*P.x - (B.x - A.x)*P.y + B.x*A.y - B.y*A.x);
     float den = std::sqrt((B.y - A.y)*(B.y - A.y) + (B.x - A.x)*(B.x - A.x)); //sqrt can be optimised
     return num / den;
 }
 
-#include <stack>
+void findHull(std::vector<ei::Vec2>& hull, const std::vector<ei::Vec2>& set,
+                  const ei::Vec2& P, const ei::Vec2& Q) {
+    if (set.empty())
+        return;
 
-std::vector<ei::Vec2> quick_hull_performance(const INPUT_PARAMETER& points)
-{
-    if (points.size() < 3)
-    {
-        return points;
+    // Find point C with maximum distance from line PQ
+    float maxDistance = -1.0f;
+    ei::Vec2 C;
+    for (const auto& point : set) {
+        float distance = distanceSquaredFromLine(P, Q, point);
+        if (distance > maxDistance) {
+            maxDistance = distance;
+            C = point;
+        }
     }
 
-    auto minmaxX = std::minmax_element(points.begin(), points.end(),
-        [](const ei::Vec2& a, const ei::Vec2& b){return a.x < b.x; });
+    auto it = std::find(hull.begin(), hull.end(), Q);
+    hull.insert(it, C);
 
-    ei::Vec2 A = *minmaxX.first;
-    ei::Vec2 B = *minmaxX.second;
+    std::vector<ei::Vec2> leftSetPC;
+    std::vector<ei::Vec2> leftSetCQ;
 
-    std::vector<ei::Vec2> leftSet;
-    std::vector<ei::Vec2> rightSet;
-
-    for (const auto& point : points) {
-        if (point == A || point == B) continue;
-        if (pointLocation(A, B, point) == 1)
-            leftSet.push_back(point);
-        else if (pointLocation(A, B, point) == -1)
-            rightSet.push_back(point);
-    }
-
-    //wegen yield wird rec nur simuliert.
-    std::stack<std::tuple<ei::Vec2, ei::Vec2, std::vector<ei::Vec2>>> stack;
-
-    std::vector convexHull = {A, B};
-
-    stack.push(std::make_tuple(A, B, leftSet));
-    stack.push(std::make_tuple(B, A, rightSet));
-
-    while (!stack.empty()) {
-        auto [P1, P2, set] = stack.top();
-        stack.pop();
-
-        if (set.empty())
+    for (const auto& point : set) {
+        if (point == C)
             continue;
 
-        float maxDistance = -1.0f;
-        ei::Vec2 C;
-
-        for (const auto& point : set) {
-            float distance = distanceFromLine(P1, P2, point);
-            if (distance > maxDistance) {
-                maxDistance = distance;
-                C = point;
-            }
-        }
-
-        auto it = std::find(convexHull.begin(), convexHull.end(), P2);
-        convexHull.insert(it, C);
-
-
-        std::vector<ei::Vec2> leftSet1;
-        std::vector<ei::Vec2> leftSet2;
-
-        for (const auto& point : set) {
-            if (point == C)
-                continue;
-            if (pointLocation(P1, C, point) == 1)
-                leftSet1.push_back(point);
-            else if (pointLocation(C, P2, point) == 1)
-                leftSet2.push_back(point);
-        }
-
-        stack.push(std::make_tuple(C, P2, leftSet2));
-        stack.push(std::make_tuple(P1, C, leftSet1));
+        if (pointLocation(P, C, point) == 1)
+            leftSetPC.push_back(point);
+        else if (pointLocation(C, Q, point) == 1)
+            leftSetCQ.push_back(point);
     }
 
-    return convexHull;
+    findHull(hull, leftSetPC, P, C);
+    findHull(hull, leftSetCQ, C, Q);
 }
 
 AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
