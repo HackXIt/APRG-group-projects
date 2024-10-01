@@ -65,6 +65,7 @@ void findHull(std::vector<ei::Vec2>& hull, const std::vector<ei::Vec2>& set,
 
 std::vector<ei::Vec2> quick_hull_performance(const INPUT_PARAMETER& points)
 {
+    std::vector<ei::Vec2> convexHull;
     if (points.size() < 3)
     {
         return points;
@@ -76,10 +77,29 @@ std::vector<ei::Vec2> quick_hull_performance(const INPUT_PARAMETER& points)
     ei::Vec2 A = *minmaxX.first;
     ei::Vec2 B = *minmaxX.second;
 
-    std::vector<ei::Vec2> hull;
-    findHull(hull, points, A, B);
-    return hull;
+    convexHull.push_back(A);
+    convexHull.push_back(B);
+
+    std::vector<ei::Vec2> leftSet;
+    std::vector<ei::Vec2> rightSet;
+
+    for (const auto& point : points) {
+        if (point == A || point == B)
+            continue;
+
+        int location = pointLocation(A, B, point);
+        if (location == 1)
+            leftSet.push_back(point);
+        else if (location == -1)
+            rightSet.push_back(point);
+    }
+
+    findHull(convexHull, leftSet, A, B);
+    findHull(convexHull, rightSet, B, A);
+
+    return convexHull;
 }
+
 
 AlgorithmGenerator quick_hull_visualization(const INPUT_PARAMETER& points)
 {
