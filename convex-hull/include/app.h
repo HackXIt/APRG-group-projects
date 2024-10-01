@@ -17,7 +17,8 @@ enum Algorithm
 {
     QUICK_HULL = 0,
     JARVIS_MARCH = 1,
-    DIVIDE_AND_CONQUER = 2
+    DIVIDE_AND_CONQUER = 2,
+    INVALID_ALGORITHM = 3
 };
 
 /**
