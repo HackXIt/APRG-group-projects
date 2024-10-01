@@ -46,6 +46,7 @@ $TestCases = @{
 $Algorithms = @{
     0 = "quick-hull"
     1 = "jarvis-march"
+    2 = "divide-and-conquer"
 }
 
 # Configuration: Adjust the number of data points per test case

@@ -13,6 +13,7 @@
 #include "VisualAlgorithm.h"
 #include "JarvisMarch.h"
 #include "QuickHull.h"
+#include "DivideAndConquer.h"
 #include "DataGenerator.h"
 
 void PrintDuration(std::chrono::high_resolution_clock::time_point start, std::chrono::high_resolution_clock::time_point end) {
@@ -260,7 +261,7 @@ int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)
             hull = jarvis_march_performance(loadedPoints);
             break;
         case DIVIDE_AND_CONQUER:
-            // divideAndConquerAlgorithm(loadedPoints);
+            hull = divide_and_conquer_performance(loadedPoints);
             break;
         default:
             std::cerr << "Invalid algorithm mode specified." << std::endl;
@@ -301,7 +302,7 @@ int gui_main(Algorithm algorithm, std::vector<ei::Vec2>* loadedPoints)
             alg_holder = VisualAlgorithm(jarvis_march_visualization);
             break;
         case DIVIDE_AND_CONQUER:
-            // alg_holder = VisualAlgorithm(divideAndConquerAlgorithm);
+            alg_holder = VisualAlgorithm(divide_and_conquer_visualization);
             break;
     }
     alg_holder.setFont(font);
