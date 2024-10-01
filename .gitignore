@@ -1,5 +1,6 @@
 # Project specific
 **/cmake-build-debug/
+convex-hull/test/*.txt
 
 # IDE specific
 .idea/
