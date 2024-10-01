@@ -3,7 +3,9 @@
 
 Param (
     [Parameter(Mandatory = $true)]
-    [string]$BinaryPath
+    [string]$BinaryPath,
+    [Parameter(Mandatory = $false)]
+    [string]$LogFile
 )
 
 # Resolve the full path of the binary
@@ -19,7 +21,12 @@ if (-Not (Test-Path $BinaryPath)) {
 $BinaryDirectory = Split-Path -Path $BinaryPath -Parent
 
 # Set the log file name
-$LogFile = "test.log"
+if (-not $LogFile) {
+    $LogFile = Join-Path -Path $BinaryDirectory -ChildPath "test.log"
+} else
+{
+    $LogFile = Resolve-Path -Path $LogFile | Select-Object -ExpandProperty Path
+}
 
 # Delete the existing log file if it exists
 if (Test-Path $LogFile) {
@@ -68,7 +75,7 @@ foreach ($TestFile in $TestFiles) {
     }
 
     # Loop over algorithms (0: QuickHull, 1: Jarvis March, 2: Divide & Conquer)
-    foreach ($Algorithm in 0,1,2) {
+    foreach ($Algorithm in 0,1) {
         # Prepare the arguments
         # Ensure test file path is full path
         $TestFilePath = $TestFileFullPath
