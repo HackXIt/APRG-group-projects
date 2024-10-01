@@ -9,6 +9,7 @@
 #include <iostream>
 #include <functional>
 #include <memory>
+#include <sys/stat.h>
 
 #include "ei/2dtypes.hpp"
 #include "SFML/Graphics.hpp"
@@ -118,15 +119,33 @@ struct Visual
     {
         highlights.emplace_back(position, text, color);
     }
+    void addIndicatorLine(const sf::Vector2f& start, const sf::Vector2f& end, const sf::Color& color)
+    {
+        indicator_lines.emplace_back(start, end, color);
+    }
     void removeHighlight(const sf::Vector2f& position)
     {
         std::erase_if(highlights, [position](const Highlight& highlight) {
             return highlight.position == position;
         });
     }
+    void removeIndicatorLine(const sf::Vector2f& start, const sf::Vector2f& end)
+    {
+        std::erase_if(indicator_lines, [start, end](const IndicatorLine& indicator_line)
+        {
+            return indicator_line.line[0].position.x == start.x
+            && indicator_line.line[0].position.y == start.y
+            && indicator_line.line[1].position.x == end.x
+            && indicator_line.line[1].position.y == end.y;
+        });
+    }
     void clearHighlights()
     {
         highlights.clear();
+    }
+    void clearIndicatorLines()
+    {
+        indicator_lines.clear();
     }
     void draw(sf::RenderWindow& window) const
     {
