@@ -84,17 +84,31 @@ std::vector<ei::Vec2> DataGenerator::GeneratePointsInSquare(size_t numPoints) {
     std::vector<ei::Vec2> points;
     points.reserve(numPoints);
 
+    // Determine the size and position of the square
     float square_size = std::min(WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT) - 200.0f; // Leave margin
     float x0 = (WINDOW_DEFAULT_WIDTH - square_size) / 2.0f;
     float y0 = (WINDOW_DEFAULT_HEIGHT - square_size) / 2.0f;
 
+    // Add the four corner points of the square
+    points.emplace_back(x0, y0);                           // Top-left corner
+    points.emplace_back(x0 + square_size, y0);              // Top-right corner
+    points.emplace_back(x0, y0 + square_size);              // Bottom-left corner
+    points.emplace_back(x0 + square_size, y0 + square_size);// Bottom-right corner
+
+    // Adjust the number of random points to generate
+    if (numPoints < 4) return points; // If fewer points are requested, only return the corners.
+    size_t randomPointsToGenerate = numPoints - 4;
+
+    // Set up random number generation within the square bounds
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist(0.0f, square_size);
+    std::uniform_real_distribution<float> distX(x0, x0 + square_size);
+    std::uniform_real_distribution<float> distY(y0, y0 + square_size);
 
-    for (size_t i = 0; i < numPoints; ++i) {
-        float x = x0 + dist(gen);
-        float y = y0 + dist(gen);
+    // Generate random points inside the square
+    for (size_t i = 0; i < randomPointsToGenerate; ++i) {
+        float x = distX(gen);
+        float y = distY(gen);
         points.emplace_back(x, y);
     }
 
