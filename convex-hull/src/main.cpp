@@ -259,6 +259,9 @@ int console_main(Algorithm algorithm, std::vector<ei::Vec2>& loadedPoints)
         case DIVIDE_AND_CONQUER:
             // divideAndConquerAlgorithm(loadedPoints);
             break;
+        default:
+            std::cerr << "Invalid algorithm mode specified." << std::endl;
+            return EXIT_FAILURE;
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Convex Hull Points: " << hull.size() << std::endl;
