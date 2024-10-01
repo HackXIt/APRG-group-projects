@@ -6,9 +6,9 @@ In this group project we will implement a collision detection algorithm, to perf
 
 The task did not have a formal description, just some topics to tick off, which are:
 
-- [ ] Dynamic Intersection Tests
- - [ ] Interval Halfing Method
- - [ ] Moving sphere to Plane/Triangle/Sphere/AABB
+- [x] Dynamic Intersection Tests
+ - [x] Interval Halfing Method
+ - [~] Moving sphere to Plane/Triangle/Sphere/AABB
 
 To write a more formal description, we suggest to ourselves the following goals:
 
@@ -58,9 +58,9 @@ We try to use external libraries as much as possible, to minimize development wo
     - [X] Sphere
     - [X] AABB
   - [x] Window und Renderer für Visualisierung der Collision (DebugLines für Detection)
-- [ ] Live-Demo => Schleife der 4 Kollisionen (Sphere to Plane/Triangle/Sphere/AABB) => Bis Sonntag 22.09
-- [ ] Dokumentation => Bis Dienstag vor Abgabe 24.09
-  - [ ] Testen der Kollisionserkennung
+- [~] Live-Demo => Schleife der 4 Kollisionen (Sphere to Plane/Triangle/Sphere/AABB) => Bis Sonntag 22.09
+- [~] Dokumentation => Bis Dienstag vor Abgabe 24.09
+  - [x] Testen der Kollisionserkennung
 
 # Dependencies
 
