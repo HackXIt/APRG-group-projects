@@ -16,6 +16,7 @@
 
 int main(int argc, char *argv[])
 {
+    std::cout << "Program started." << std::endl;
     if (argc == 1)
     {
         // Just run the GUI if there's no arguments
