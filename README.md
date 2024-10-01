@@ -1,8 +1,8 @@
 # APRG-group-projects
 A repository for the group project in advanced programming course running:
 
-- ... a convex-hull algorithm
-- ... a collision-detection algorithm via SFML
+- [a collision-detection algorithm via SFML](./collision-detection)
+- [a convex-hull algorithm visualization](./convex-hull)
 
 # Library examples
 
@@ -15,4 +15,4 @@ These example projects serve the purpose of testing your project setup and the l
 
 Both projects serve no meaning, other than opening a window using said library, which basically tests the compilation and linking via cmake.
 
-For our projects we have chosen **XXX** as the library to use.
+For our projects we have chosen **SFML** as the library to use.
