@@ -31,6 +31,8 @@ std::vector<ei::Vec2> jarvis_march_performance(INPUT_PARAMETER& points)
     for (unsigned int i = 1; i < point_count; i++)
         if (points[i].x < points[left].x)
             left = i;
+        else if (points[i].x == points[left].x && points[i].y < points[left].y)
+            left = i;
 
     unsigned int current = left;
     unsigned int next;
