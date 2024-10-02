@@ -5,6 +5,9 @@ project(convex-hull)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
+# Set optimization flags for the Release build type
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
 # Fetch the source code of SFML
 include(FetchContent)
 FetchContent_Declare(SFML

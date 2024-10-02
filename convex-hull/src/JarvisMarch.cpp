@@ -83,7 +83,7 @@ AlgorithmGenerator jarvis_march_visualization(INPUT_PARAMETER& points)
         visual->setExplanation("Point cloud has less than 3 points. Convex hull is the point cloud itself.");
         for (const auto& point : points)
         {
-            visual->current_hull.append(sf::Vertex(sf::Vector2f(point.x, point.y), sf::Color::Green));
+            visual->addHullPoint(sf::Vector2f(point.x, point.y), sf::Color::Green);
             visual->addHighlight(sf::Vector2f(point.x, point.y), "P", sf::Color::Blue);
             co_yield visual;
         }
