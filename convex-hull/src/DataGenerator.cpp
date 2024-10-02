@@ -4,6 +4,8 @@
 
 #include "DataGenerator.h"
 
+#include <iostream>
+
 std::vector<ei::Vec2> DataGenerator::GeneratePoints(Generator generator, size_t numPoints)
 {
     switch (generator)
@@ -41,15 +43,58 @@ std::vector<ei::Vec2> DataGenerator::GenerateRandomPoints(size_t numPoints) {
 }
 
 // 2. Generate points forming a straight line.
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <ei/2dtypes.hpp>
+
 std::vector<ei::Vec2> DataGenerator::GenerateStraightLine(size_t numPoints) {
     std::vector<ei::Vec2> points;
     points.reserve(numPoints);
 
-    float x0 = 100.0f;
-    float y0 = 100.0f;
-    float x1 = WINDOW_DEFAULT_WIDTH - 100.0f;
-    float y1 = WINDOW_DEFAULT_HEIGHT - 100.0f;
+    // Seed for random number generator
+    std::srand(static_cast<unsigned>(std::time(0)));
 
+    // Define the range within the window boundaries
+    float minX = 100.0f;
+    float minY = 100.0f;
+    float maxX = WINDOW_DEFAULT_WIDTH - 100.0f;
+    float maxY = WINDOW_DEFAULT_HEIGHT - 100.0f;
+
+    // Randomly choose the line type: 0 = horizontal, 1 = vertical, 2 = diagonal
+    int lineType = std::rand() % 3;
+
+    float x0, y0, x1, y1;
+
+    switch (lineType) {
+    case 0: // Horizontal Line
+        std::cout << "Generating horizontal line..." << std::endl;
+        y0 = y1 = minY + static_cast<float>(std::rand()) / RAND_MAX * (maxY - minY);
+        x0 = minX;
+        x1 = maxX;
+        break;
+    case 1: // Vertical Line
+        std::cout << "Generating vertical line..." << std::endl;
+        x0 = x1 = minX + static_cast<float>(std::rand()) / RAND_MAX * (maxX - minX);
+        y0 = minY;
+        y1 = maxY;
+        break;
+    case 2: // Diagonal Line (random angle)
+        std::cout << "Generating diagonal line (random angle)..." << std::endl;
+        x0 = minX + static_cast<float>(std::rand()) / RAND_MAX * (maxX - minX);
+        y0 = minY + static_cast<float>(std::rand()) / RAND_MAX * (maxY - minY);
+
+        // Randomly pick an angle between -45 to 45 degrees (converted to radians)
+        float angle = -0.785398f + static_cast<float>(std::rand()) / RAND_MAX * 1.5708f;
+
+        // Calculate endpoint using the chosen angle and the line's length
+        float length = std::min(maxX - x0, maxY - y0) * 0.8f; // Adjust length to fit within bounds
+        x1 = x0 + length * std::cos(angle);
+        y1 = y0 + length * std::sin(angle);
+        break;
+    }
+
+    // Generate points along the line
     for (size_t i = 0; i < numPoints; ++i) {
         float t = static_cast<float>(i) / (numPoints - 1);
         float x = x0 + t * (x1 - x0);
@@ -59,6 +104,7 @@ std::vector<ei::Vec2> DataGenerator::GenerateStraightLine(size_t numPoints) {
 
     return points;
 }
+
 
 // 3. Generate points forming a circle.
 std::vector<ei::Vec2> DataGenerator::GenerateCircle(size_t numPoints) {
