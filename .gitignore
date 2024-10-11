@@ -7,6 +7,7 @@ convex-hull/test/*.txt
 # IDE specific
 .idea/
 !.idea/APRG-collision-detection.iml
+.run/
 
 # Prerequisites
 *.d
