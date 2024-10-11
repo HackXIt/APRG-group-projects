@@ -1,11 +1,21 @@
 ﻿CXX = g++
 CXXFLAGS = -std=c++20 -O2
 INC = -I./include
+BUILD_DIR = build
 
-all: peg_solitaire
+all: $(BUILD_DIR)/peg-solitaire
 
-peg_solitaire: ./src/main.cpp ./src/peg-solitaire.cpp
-	$(CXX) $(CXXFLAGS) $(INC) -o peg_solitaire $^
+$(BUILD_DIR)/peg-solitaire: $(BUILD_DIR)/main.o $(BUILD_DIR)/peg-solitaire.o
+	$(CXX) $(CXXFLAGS) $(INC) -o $@ $^
+
+$(BUILD_DIR)/main.o: ./src/main.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $<
+
+$(BUILD_DIR)/peg-solitaire.o: ./src/peg-solitaire.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(INC) -c -o $@ $<
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
 clean:
-	rm -f *.o peg_solitaire
+	rm -rf $(BUILD_DIR)

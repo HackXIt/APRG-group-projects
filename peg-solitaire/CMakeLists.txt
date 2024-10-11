@@ -1,5 +1,5 @@
 ﻿set (CMAKE_CXX_STANDARD 20)
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.25)
 # Define the project for convex-hull
 project(peg-solitaire)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)

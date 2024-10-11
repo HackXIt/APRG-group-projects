@@ -23,5 +23,21 @@ make
 Alternatively, you can use `cmake` to build the program.
 
 ```bash
+cmake -S . -B cmake-build
+cmake --build cmake-build
+```
 
+Running:
+--------
+
+To run the program, use the following command:
+
+- When built with `make` instructions:
+```bash
+./build/peg-solitaire
+```
+
+- When built with `cmake` instructions:
+```bash
+./cmake-build/peg-solitaire
 ```
