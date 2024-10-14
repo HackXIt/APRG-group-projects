@@ -41,28 +41,50 @@ bool Board::isValidPosition(int row, int col) {
     return row >= 0 && row < SIZE && col >= 0 && col < SIZE && cells[row][col] != INVALID;
 }
 
-vector<Move> Board::getPossibleMoves() {
-    vector<Move> moves;
-    // Directions: up, down, left, right
-    int dir[4][2] = { {-1,0}, {1,0}, {0,-1}, {0,1} };
+std::vector<Move> Board::getPossibleMoves() {
+    std::vector<Move> moves;
 
-    for (int i = 0; i < SIZE; ++i) {
-        for (int j = 0; j < SIZE; ++j) {
+    // Define the four possible directions: up, down, left, right
+    // Each direction is represented as a pair of row and column offsets
+    int dir[4][2] = {
+        {-1, 0}, // Up
+        {1, 0},  // Down
+        {0, -1}, // Left
+        {0, 1}   // Right
+    };
+
+    // Iterate over each cell on the board
+    for (int i = 0; i < SIZE; ++i) {       // Loop over rows
+        for (int j = 0; j < SIZE; ++j) {   // Loop over columns
+            // Check if there is a peg at the current position
             if (cells[i][j] == PEG) {
+                // For each peg, check all four possible move directions
                 for (int d = 0; d < 4; ++d) {
-                    int ni = i + dir[d][0];
-                    int nj = j + dir[d][1];
-                    int nii = i + 2 * dir[d][0];
-                    int njj = j + 2 * dir[d][1];
+                    // Calculate the position of the adjacent cell in the current direction
+                    int ni = i + dir[d][0]; // Adjacent row index
+                    int nj = j + dir[d][1]; // Adjacent column index
 
-                    if (isValidPosition(nii, njj) && cells[ni][nj] == PEG && cells[nii][njj] == EMPTY) {
-                        Move move(Position(i, j), Position(ni, nj), Position(nii, njj));
-                        moves.push_back(move);
+                    // Calculate the position of the cell two steps away in the same direction
+                    int nii = i + 2 * dir[d][0]; // Destination row index
+                    int njj = j + 2 * dir[d][1]; // Destination column index
+
+                    // Check if the destination position is valid (within bounds and not an invalid cell)
+                    if (isValidPosition(nii, njj)) {
+                        // Check if there is a peg in the adjacent cell (the one to be jumped over)
+                        if (cells[ni][nj] == PEG) {
+                            // Check if the destination cell is empty
+                            if (cells[nii][njj] == EMPTY) {
+                                // All conditions are met; add this move to the list of possible moves
+                                Move move(Position(i, j), Position(ni, nj), Position(nii, njj));
+                                moves.push_back(move);
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
     return moves;
 }
 
