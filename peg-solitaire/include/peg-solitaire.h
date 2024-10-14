@@ -33,10 +33,12 @@ public:
     Board();
     void initialize();
     bool isValidPosition(int row, int col);
+    bool isPegAtCenter();
     std::vector<Move> getPossibleMoves();
     bool applyMove(const Move& move);
     void undoMove(const Move& move);
     int countPegs();
+    void printBoard();
 };
 
 bool solve(Board& board, std::vector<Move>& solution);

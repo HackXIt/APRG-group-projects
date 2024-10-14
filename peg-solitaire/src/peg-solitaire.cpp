@@ -28,9 +28,11 @@ void Board::initialize() {
         {-1, -1,  1, 1, 1, -1, -1}
     };
 
+    // Adjust the mapping of init array to cells array
+    // Swap rows and columns to match the expected positions
     for (int i = 0; i < Board::SIZE; ++i) {
         for (int j = 0; j < Board::SIZE; ++j) {
-            cells[i][j] = static_cast<Cell>(init[i][j]);
+            cells[j][i] = static_cast<Cell>(init[i][j]);
         }
     }
 }
@@ -88,10 +90,46 @@ int Board::countPegs() {
     return count;
 }
 
+void Board::printBoard() {
+    std::cout << "[";
+    for (int i = 0; i < SIZE; ++i) {
+        std::cout << "[";
+        for (int j = 0; j < SIZE; ++j) {
+            char c;
+            if (cells[i][j] == INVALID) {
+                c = '-';
+            } else if (cells[i][j] == EMPTY) {
+                c = '.';
+            } else if (cells[i][j] == PEG) {
+                c = 'o';
+            }
+            std::cout << c;
+            if (j != SIZE - 1) {
+                std::cout << ",";
+            }
+        }
+        std::cout << "]";
+        if (i != SIZE - 1) {
+            std::cout << "," << std::endl;
+        }
+    }
+    std::cout << "]" << std::endl;
+}
+
+bool Board::isPegAtCenter() {
+    // The center position is at (3,3) in the adjusted board representation
+    return cells[3][3] == PEG;
+}
+
 bool solve(Board& board, vector<Move>& solution) {
     if (board.countPegs() == 1) {
-        // Solution found
-        return true;
+        if (board.isPegAtCenter()) {
+            // Solution found with the last peg at the center
+            return true;
+        } else {
+            // Last peg is not at the center, backtrack
+            return false;
+        }
     }
 
     vector<Move> moves = board.getPossibleMoves();
