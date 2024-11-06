@@ -1,5 +1,6 @@
 # Project specific
 **/cmake-build-debug/
+**/cmake-build-release/
 convex-hull/test/*.txt
 *.log
 
