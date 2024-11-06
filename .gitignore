@@ -3,10 +3,12 @@
 **/cmake-build-release/
 convex-hull/test/*.txt
 *.log
+*.pdf
 
 # IDE specific
 .idea/
 !.idea/APRG-collision-detection.iml
+.run/
 
 # Prerequisites
 *.d
