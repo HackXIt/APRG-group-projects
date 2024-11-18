@@ -9,3 +9,5 @@ add_subdirectory(sdl2-example)
 add_subdirectory(sfml-example)
 add_subdirectory(peg-solitaire)
 add_subdirectory(quiz4)
+
+add_subdirectory(quiz6)
