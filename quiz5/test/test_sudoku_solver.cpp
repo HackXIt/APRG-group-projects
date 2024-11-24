@@ -1,7 +1,4 @@
-﻿//
-// Created by RINI on 18/11/2024.
-//
-#include <gtest/gtest.h>
+﻿#include <gtest/gtest.h>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -9,79 +6,69 @@
 #include <chrono> // For timing
 #include "sudoku_solver.h"
 
-// Helper function to read a sudoku from a file into a vector of strings
-void readSudokuFromFile(const std::string& filename, std::vector<std::string>& sudoku) {
+// Helper function to read a Sudoku string from a file
+std::string readSudokuFromFile(const std::string& filename) {
     std::ifstream file(filename);
-    std::string line;
-    while (std::getline(file, line)) {
-        sudoku.push_back(line);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + filename);
     }
+    std::ostringstream oss;
+    oss << file.rdbuf();
+    return oss.str();
 }
 
-// Helper function to read expected output from a file into a single string for comparison
-std::string readSudokuToString(const std::string& filename) {
-    std::ifstream file(filename);
-    std::ostringstream content;
-    content << file.rdbuf();
-    return content.str();
+// Helper function to format Sudoku board output for direct string comparison
+std::string formatSudokuOutput(const Sudoku& sudoku) {
+    std::ostringstream oss;
+    sudoku.printBoard(oss);
+    return oss.str();
 }
 
+// Test case for verifying correctness of the solved Sudoku
 TEST(SudokuSolverTest, CorrectOutput) {
-    // Load the input sudoku
-    std::vector<std::string> sudoku;
-    readSudokuFromFile("input.txt", sudoku);
+    // Load input Sudoku from file
+    std::string input = readSudokuFromFile("input.txt");
 
-    // Solve the sudoku in-place
-    solveSudoku(sudoku);
+    // Load expected Sudoku from file
+    std::string expectedOutput = readSudokuFromFile("expected.txt");
 
-    // Convert the solved sudoku to a single string for comparison
-    std::ostringstream solvedSudokuStream;
-    for (size_t i = 0; i < sudoku.size(); ++i) {
-        solvedSudokuStream << sudoku[i];
-        if (i < sudoku.size() - 1) { // Add newline only between lines
-            solvedSudokuStream << '\n';
-        }
-    }
+    // Solve the Sudoku
+    Sudoku sudoku(input);
+    sudoku.solve();
 
-    // Load the expected output
-    std::string expectedOutput = readFileToString("expected.txt");
+    // Get the formatted solved Sudoku for comparison
+    std::string solvedOutput = formatSudokuOutput(sudoku);
 
-    // Compare the solved sudoku to the expected output
-    EXPECT_EQ(solvedSudokuStream.str(), expectedOutput);
+    // Compare the solved Sudoku with the expected output
+    EXPECT_EQ(solvedOutput, expectedOutput);
 }
 
 // Test case for execution time limit
 TEST(SudokuSolverTest, ExecutionTimeLimit) {
-    // Load the input sudoku
-    std::vector<std::string> sudoku;
-    readSudokuFromFile("input.txt", sudoku);
+    // Load input Sudoku from file
+    std::string input = readSudokuFromFile("input.txt");
 
-    // Measure execution time
+    // Solve the Sudoku and measure execution time
+    Sudoku sudoku(input);
     auto start = std::chrono::high_resolution_clock::now();
-    solveSudoku(sudoku);
+    sudoku.solve();
     auto end = std::chrono::high_resolution_clock::now();
+
     std::chrono::duration<double> elapsed = end - start;
 
     // Assert that execution time is under 1 second
     EXPECT_LT(elapsed.count(), 1.0) << "Execution time exceeded 1 second.";
 }
 
-// Test case for estimated memory usage (approximate check)
+// Test case for estimated memory usage
 TEST(SudokuSolverTest, EstimatedMemoryUsage) {
-    // Load the input sudoku
-    std::vector<std::string> sudoku;
-    readSudokuFromFile("input.txt", sudoku);
+    // Load input Sudoku from file
+    std::string input = readSudokuFromFile("input.txt");
 
-    // Size estimation of key data structures
-    size_t visitedSize = sizeof(bool) * ROWS * COLS;
-    size_t sudokuSize = 0;
-    for (const auto& line : sudoku) {
-        sudokuSize += line.size();
-    }
-    size_t priorityQueueNodeSize = sizeof(Node) * (ROWS * COLS); // Maximum possible nodes in priority queue
+    // Approximate memory usage estimation
+    size_t boardSize = sizeof(int) * 81; // 81 integers for the Sudoku board
+    size_t totalEstimatedMemory = boardSize;
 
-    size_t totalEstimatedMemory = visitedSize + sudokuSize + priorityQueueNodeSize;
-
-    // Check that estimated memory is within 1 MB (1 MB = 1,024 * 1,024 bytes)
+    // Check that estimated memory usage is within 1 MB (1,024 * 1,024 bytes)
     EXPECT_LT(totalEstimatedMemory, 1 * 1024 * 1024) << "Estimated memory usage exceeded 1 MB.";
 }

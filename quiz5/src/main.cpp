@@ -1,6 +1,7 @@
 ﻿#include "sudoku_solver.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -31,14 +32,23 @@ int main(int argc, char* argv[]) {
     std::string input_file = argv[1];
     std::string output_file = argv[2];
 
-//    std::vector<std::string> sudoku;
+    std::vector<std::string> sudoku;
     readSudokuFromFile(input_file, sudoku);
 
-    // Solve the sudoku
-    solveSudoku(sudoku);
+    // Flatten the input for the Sudoku class
+    std::string board = sudoku[0]; // Assuming single-line input
+    Sudoku sudokuSolver(board);
 
-    // Write the solved sudoku to the output file
-    writeSudokuToFile(output_file, sudoku);
+    // Solve the Sudoku
+    sudokuSolver.solve();
+
+    // Prepare output
+    std::ostringstream oss;
+    sudokuSolver.printBoard(oss);
+    std::vector<std::string> solvedSudoku = {oss.str()};
+
+    // Write the solved Sudoku to the output file
+    writeSudokuToFile(output_file, solvedSudoku);
 
     return 0;
 }
