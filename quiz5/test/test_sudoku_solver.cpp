@@ -20,7 +20,7 @@ std::string readSudokuFromFile(const std::string& filename) {
 // Helper function to format Sudoku board output for direct string comparison
 std::string formatSudokuOutput(const Sudoku& sudoku) {
     std::ostringstream oss;
-    sudoku.printBoard(oss);
+    sudoku.print_board(oss);
     return oss.str();
 }
 

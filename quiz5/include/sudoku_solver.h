@@ -1,32 +1,30 @@
 ﻿#ifndef CSP_ALGORITHM_H
 #define CSP_ALGORITHM_H
 
-#include <iostream>
-#include <set>
-#include <vector>
 #include <string>
-#include <array>
+#include <bitset>
+#include <vector>
+#include <set>
+using namespace std;
 
 class Sudoku {
-private:
-    static const int SIZE = 9;
-    static const int GRID_SIZE = 81;
-    int board[GRID_SIZE]; // Sudoku board (0 represents empty cells)
-    std::array<std::set<int>, GRID_SIZE> domains; // Domains for each cell
-
-    bool isSafe(int row, int col, int num) const;
-    void initializeDomains();
-    bool propagateConstraints();
-    int selectNextCell() const; // Minimum Remaining Values (MRV) heuristic
-    bool backtrack();
-    void removeFromDomains(int cell, int value);
-    void restoreDomains(const std::vector<std::pair<int, int>>& changes);
-
 public:
-    Sudoku(const std::string& s);
+    explicit Sudoku(const std::string& input);
+
     void solve();
-    void printBoard(std::ostream& os) const;
-    std::string toString() const;
+    void print_board(std::ostream& os) const;
+private:
+    int board[81]{}; // Current assignment of the Sudoku board
+    bitset<9> domains[81]; // Domains for each variable (cell)
+    vector<int> neighbors[81]; // Neighbors for each cell
+
+    void initialize_neighbors();
+
+    void initialize_domains();
+
+    int select_unassigned_variable();
+
+    bool backtrack();
 };
 
 #endif // CSP_ALGORITHM_H

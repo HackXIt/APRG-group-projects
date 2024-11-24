@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
     // Prepare output
     std::ostringstream oss;
-    sudokuSolver.printBoard(oss);
+    sudokuSolver.print_board(oss);
     std::vector<std::string> solvedSudoku = {oss.str()};
 
     // Write the solved Sudoku to the output file
