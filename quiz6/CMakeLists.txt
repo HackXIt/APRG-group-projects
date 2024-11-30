@@ -13,7 +13,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 # Create a library for the maze-solving logic
 add_library(${PROJECT_NAME}_lib src/min_max.cpp)
 
-# Add the main program, linking it to the maze_solver_lib
+# Add the main program, linking it to the min_max_lib
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_lib)
 
