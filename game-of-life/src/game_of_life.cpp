@@ -12,15 +12,28 @@ GameOfLife::GameOfLife(unsigned int rows, unsigned int columns)
     : rows(rows), columns(columns) {
     gridSize = rows * columns;
     grid = new unsigned char[gridSize]();
-    prevGrid = new unsigned char[gridSize]();
     memset(grid, 0, gridSize);
-    memset(prevGrid, 0, gridSize);
+}
+
+GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, const std::vector<std::vector<char>>& seed)
+    : rows(rows), columns(columns) {
+    gridSize = rows * columns;
+    grid = new unsigned char[gridSize]();
+    memset(grid, 0, gridSize);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < columns; ++j) {
+            if (seed[i][j] == LIVE_CELL) {
+                setCell(i, j);
+            }
+            // NOTE Cells are initialized as dead by default
+        }
+    }
 }
 
 GameOfLife::~GameOfLife()
 {
     delete[] grid;
-    delete[] prevGrid;
 }
 
 void GameOfLife::setCell(unsigned int row, unsigned int col)
@@ -77,7 +90,7 @@ void GameOfLife::clearCell(unsigned int row, unsigned int col)
     const int cellOffsetUp = (row == 0) ? static_cast<int>(gridSize - w) : -w;
     const int cellOffsetDown = (row == h - 1) ? -static_cast<int>(gridSize - w) : w;
 
-    unsigned char *cellPtr = grid + row * w + col;
+    unsigned char *cellPtr = grid + (row * w) + col;
 
     // Deactivate cell
     CELL_DEACTIVATE(*cellPtr);
@@ -95,23 +108,33 @@ void GameOfLife::clearCell(unsigned int row, unsigned int col)
 
 char GameOfLife::cellState(unsigned int row, unsigned int col) const
 {
-    return grid[row * columns + col] & 0x01 ? LIVE_CELL : DEAD_CELL;
+    return CELL_IS_ALIVE(grid[row * columns + col]) ? LIVE_CELL : DEAD_CELL;
+}
+
+std::vector<std::vector<char>> GameOfLife::getGrid() const
+{
+    std::vector<std::vector<char>> gridVector(rows, std::vector<char>(columns));
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < columns; ++j) {
+            gridVector[i][j] = cellState(i, j);
+        }
+    }
+    return gridVector;
 }
 
 void GameOfLife::next()
 {
-    memcpy(prevGrid, grid, gridSize);
     unsigned char *cellPtr = grid;
-    for(unsigned col = 0; col < columns; ++col)
+    for(unsigned int row = 0; row < rows; ++row)
     {
-        unsigned int row = 0;
+        unsigned int col = 0;
         do
         {
             // Skip dead cells with no living neighbors
             while(*cellPtr == CELL_DEAD_NO_NEIGHBORS)
             {
-                cellPtr++; // Move to the next cell
-                if(++row >= rows) // Check if we reached the end of the row
+                ++cellPtr; // Move to the next cell
+                if(++col >= columns) // Check if we reached the end of the row
                 {
                     goto RowDone;
                 }
@@ -135,8 +158,8 @@ void GameOfLife::next()
                     setCell(row, col);
                 }
             }
-            cellPtr++; // Move to the next cell
-        } while(++row < rows);
+            ++cellPtr; // Move to the next cell
+        } while(++col < columns);
     RowDone:;
     }
 }

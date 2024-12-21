@@ -3,9 +3,22 @@
 //
 #include "gtest/gtest.h"
 #include "game_of_life.h"
+#include "Timing.h"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+
+// NOTE https://stackoverflow.com/questions/16491675/how-to-send-custom-message-in-google-c-testing-framework
+class TestCout : public std::stringstream
+{
+public:
+    ~TestCout()
+    {
+        std::cout << "\u001b[32m[          ] \u001b[33m" << str() << "\u001b[0m" << std::flush;
+    }
+};
+
+#define TEST_COUT  TestCout()
 
 class ScopedFile {
 public:
@@ -42,7 +55,7 @@ class LogicTest : public ::testing::TestWithParam<LogicTestParams> {};
 TEST_P(LogicTest, VerifyUpdateLogic) {
     LogicTestParams params = GetParam();
     GameOfLife game(params.rows, params.columns, params.initialState);
-    game.update();
+    game.next();
     EXPECT_EQ(game.getGrid(), params.expectedState);
 }
 
@@ -50,8 +63,16 @@ INSTANTIATE_TEST_SUITE_P(
     GameOfLifeLogicTests,
     LogicTest,
     ::testing::Values(
-        LogicTestParams{3, 3, {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}}, {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}},
-        LogicTestParams{4, 4, {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}, {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}}
+        LogicTestParams{
+            3,
+            3,
+            {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}},
+            {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}},
+        LogicTestParams{
+            4,
+            4,
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}},
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}}
     )
 );
 
@@ -99,14 +120,36 @@ TEST_P(EndToEndTest, VerifyOutputMatchesExpected) {
     std::string expectedFile = "expected/" + params.expectedOutputFile;
     std::string outputFile = getOutputFilename(params.inputFile);
 
-    GameOfLife game = GameOfLife::fromFile(inputFile);
+    GameOfLife game = *GameOfLife::fromFile(inputFile);
 
-    for (int i = 0; i < params.generations; ++i) {
-        game.update();
-    }
+    game.update(params.generations);
 
     game.toFile(outputFile);
     compareFiles(outputFile, expectedFile);
+}
+
+TEST_P(EndToEndTest, VerifyOutputMatchesExpectedWithTiming)
+{
+    EndToEndTestParams params = GetParam();
+
+    // Prefix directories
+    std::string inputFile = "input/" + params.inputFile;
+    std::string expectedFile = "expected/" + params.expectedOutputFile;
+    std::string outputFile = getOutputFilename(params.inputFile);
+
+    Timing* timing = Timing::getInstance();
+    timing->startSetup();
+    GameOfLife game = *GameOfLife::fromFile(inputFile);
+    timing->stopSetup();
+    timing->startComputation();
+    game.update(params.generations);
+    timing->stopComputation();
+    timing->startFinalization();
+    game.toFile(outputFile);
+    timing->stopFinalization();
+
+    compareFiles(outputFile, expectedFile);
+    TEST_COUT << timing->getResults() << std::endl;
 }
 
 INSTANTIATE_TEST_SUITE_P(
