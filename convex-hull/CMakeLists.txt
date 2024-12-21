@@ -18,6 +18,19 @@ FetchContent_Declare(SFML
         SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
+# Check for cxxopts library, if unavailable download it using FetchContent
+find_package(cxxopts QUIET)
+if (NOT cxxopts_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+            cxxopts
+            GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+            GIT_TAG v3.2.1
+    )
+    FetchContent_MakeAvailable(cxxopts)
+    include_directories(${cxxopts_SOURCE_DIR}/include)
+endif()
+
 FILE(GLOB SOURCES src/*.cpp)
 
 # Add the executable target for convex-hull
@@ -35,7 +48,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../resources/FiraCodeNerdFontMono-Ret
 target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}/../extern/epsilon/include
-        cxxopts
         )
 target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics cxxopts -static-libgcc -static-libstdc++)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
