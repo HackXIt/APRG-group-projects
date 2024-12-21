@@ -6,18 +6,27 @@ set(CMAKE_CXX_STANDARD 17)
 # Set optimization flags for the Release build type
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
+include(FetchContent)
+
+FetchContent_Declare(
+        cxxopts
+        GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+        GIT_TAG v3.2.1
+)
+FetchContent_MakeAvailable(cxxopts)
+
 # Add include directory where the header files are located
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include ${cxxopts_SOURCE_DIR}/include)
 
 # Create a library for the maze-solving logic
 add_library(${PROJECT_NAME}_lib src/${PROJECT_NAME}.cpp)
 
-# Add the main program, linking it to the min_max_lib
-add_executable(${PROJECT_NAME} src/main.cpp)
+# Add the main program, linking it to the game_of_life_lib
+add_executable(${PROJECT_NAME} src/main.cpp src/Timing.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_lib)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 
 # Google Test setup
-include(FetchContent)
 FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/release-1.12.1.zip
@@ -35,11 +44,8 @@ include(GoogleTest)
 gtest_discover_tests(${PROJECT_NAME}_test)
 
 # Define input and expected directories
-set(INPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/input)
-set(EXPECTED_DIR ${CMAKE_CURRENT_LIST_DIR}/expected)
-
-file(GLOB_RECURSE INPUT_FILES "${INPUT_DIR}/*")
-file(GLOB_RECURSE EXPECTED_FILES "${EXPECTED_DIR}/*")
+file(GLOB_RECURSE INPUT_FILES "${CMAKE_CURRENT_LIST_DIR}/input/*")
+file(GLOB_RECURSE EXPECTED_FILES "${CMAKE_CURRENT_LIST_DIR}/expected/*")
 
 # Copy individual files from input/ & expected/ to the build directory
 foreach(FILE ${INPUT_FILES})

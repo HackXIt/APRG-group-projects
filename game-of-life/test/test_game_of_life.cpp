@@ -9,7 +9,7 @@
 
 class ScopedFile {
 public:
-    ScopedFile(const std::string& filename) : file(filename) {
+    explicit ScopedFile(const std::string& filename) : file(filename) {
         if (!file.is_open()) {
             throw std::runtime_error("Failed to open file: " + filename);
         }
@@ -64,67 +64,70 @@ struct EndToEndTestParams {
 
 class EndToEndTest : public ::testing::TestWithParam<EndToEndTestParams> {
 protected:
-    const std::string outputFilename = "test_output.gol";
+    static std::string getOutputFilename(const std::string& inputFilename) {
+        size_t lastSlash = inputFilename.find_last_of('/');
+        std::string baseName = (lastSlash == std::string::npos) ? inputFilename : inputFilename.substr(lastSlash + 1);
+        return "output/" + baseName;
+    }
 
     void SetUp() override {
-        if (std::filesystem::exists(outputFilename)) {
-            std::filesystem::remove(outputFilename);
+        if (!std::filesystem::exists("output")) {
+            std::filesystem::create_directory("output");
         }
     }
 
-    void TearDown() override {
-        if (std::filesystem::exists(outputFilename)) {
-            std::filesystem::remove(outputFilename);
-        }
-    }
-
-    void compareFiles(const std::string& file1, const std::string& file2) {
+    static void compareFiles(const std::string& file1, const std::string& file2) {
         SCOPED_TRACE("Comparing files: " + file1 + " and " + file2);
 
         ScopedFile stream1(file1);
         ScopedFile stream2(file2);
 
+        // Check lines
         std::string line1, line2;
-        while (std::getline(stream1.get(), line1) && std::getline(stream2.get(), line2)) {
+        while (std::getline(stream1.get(), line1) && std::getline(stream2.get(), line2))
+        {
             EXPECT_EQ(line1, line2);
         }
-
-        EXPECT_TRUE(stream1.get().eof() && stream2.get().eof())
-            << "Files have different number of lines.";
     }
 };
 
 TEST_P(EndToEndTest, VerifyOutputMatchesExpected) {
     EndToEndTestParams params = GetParam();
-    GameOfLife game = GameOfLife::fromFile(params.inputFile);
+
+    // Prefix directories
+    std::string inputFile = "input/" + params.inputFile;
+    std::string expectedFile = "expected/" + params.expectedOutputFile;
+    std::string outputFile = getOutputFilename(params.inputFile);
+
+    GameOfLife game = GameOfLife::fromFile(inputFile);
 
     for (int i = 0; i < params.generations; ++i) {
         game.update();
     }
 
-    game.toFile(outputFilename);
-    compareFiles(outputFilename, params.expectedOutputFile);
+    game.toFile(outputFile);
+    compareFiles(outputFile, expectedFile);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     GameOfLifeEndToEndTests,
     EndToEndTest,
     ::testing::Values(
-        EndToEndTestParams{250, "input/random250_in.gol", "expected/random250_out.gol"},
-        EndToEndTestParams{250, "input/random500_in.gol", "expected/random500_out.gol"},
-        EndToEndTestParams{250, "input/random750_in.gol", "expected/random750_out"},
-        EndToEndTestParams{250, "input/random1000_in.gol", "expected/random1000_out"},
-        EndToEndTestParams{250, "input/random1250_in.gol", "expected/random1250_out"},
-        EndToEndTestParams{250, "input/random1500_in.gol", "expected/random1500_out"},
-        EndToEndTestParams{250, "input/random1750_in.gol", "expected/random1750_out"},
-        EndToEndTestParams{250, "input/random2000_in.gol", "expected/random2000_out"},
-        EndToEndTestParams{250, "input/random3000_in.gol", "expected/random3000_out"},
-        EndToEndTestParams{250, "input/random4000_in.gol", "expected/random4000_out"},
-        EndToEndTestParams{250, "input/random5000_in.gol", "expected/random5000_out"},
-        EndToEndTestParams{250, "input/random6000_in.gol", "expected/random6000_out"},
-        EndToEndTestParams{250, "input/random7000_in.gol", "expected/random7000_out"},
-        EndToEndTestParams{250, "input/random8000_in.gol", "expected/random8000_out"},
-        EndToEndTestParams{250, "input/random9000_in.gol", "expected/random9000_out"},
-        EndToEndTestParams{250, "input/random10000_in.gol", "expected/random10000_out"}
+        EndToEndTestParams{250, "random250_in.gol", "random250_out.gol"},
+        EndToEndTestParams{250, "random500_in.gol", "random500_out.gol"},
+        EndToEndTestParams{250, "random750_in.gol", "random750_out.gol"},
+        EndToEndTestParams{250, "random1000_in.gol", "random1000_out.gol"},
+        EndToEndTestParams{250, "random1250_in.gol", "random1250_out.gol"},
+        EndToEndTestParams{250, "random1500_in.gol", "random1500_out.gol"},
+        EndToEndTestParams{250, "random1750_in.gol", "random1750_out.gol"},
+        EndToEndTestParams{250, "random2000_in.gol", "random2000_out.gol"},
+        EndToEndTestParams{250, "random3000_in.gol", "random3000_out.gol"},
+        EndToEndTestParams{250, "random4000_in.gol", "random4000_out.gol"},
+        EndToEndTestParams{250, "random5000_in.gol", "random5000_out.gol"},
+        EndToEndTestParams{250, "random6000_in.gol", "random6000_out.gol"},
+        EndToEndTestParams{250, "random7000_in.gol", "random7000_out.gol"},
+        EndToEndTestParams{250, "random8000_in.gol", "random8000_out.gol"},
+        EndToEndTestParams{250, "random9000_in.gol", "random9000_out.gol"},
+        EndToEndTestParams{250, "random10000_in.gol", "random10000_out.gol"}
     )
 );

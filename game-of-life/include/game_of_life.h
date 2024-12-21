@@ -8,11 +8,16 @@
 #include <vector>
 #include <string>
 
+#define RULE_BECOME_ALIVE_NEIGHBORS 3
+#define RULE_STAY_ALIVE_MIN 2
+#define RULE_STAY_ALIVE_MAX 3
+
 class GameOfLife {
 public:
     GameOfLife(int rows, int columns, const std::vector<std::vector<char>>& seed);
+    ~GameOfLife();
 
-    void update(); // Advance to the next generation
+    void update(int generations); // Advance to the next generation
 
     const std::vector<std::vector<char>>& getGrid() const; // Get the current grid
 
