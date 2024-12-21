@@ -3,45 +3,152 @@
 //
 
 #include "game_of_life.h"
+#include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 
-GameOfLife::GameOfLife(int rows, int columns, const std::vector<std::vector<char>>& seed)
-    : rows(rows), columns(columns), grid(seed) {
-    if (seed.size() != rows || (rows > 0 && seed[0].size() != columns)) {
-        throw std::invalid_argument("Seed dimensions do not match rows and columns.");
+GameOfLife::GameOfLife(unsigned int rows, unsigned int columns)
+    : rows(rows), columns(columns) {
+    gridSize = rows * columns;
+    grid = new unsigned char[gridSize]();
+    prevGrid = new unsigned char[gridSize]();
+    memset(grid, 0, gridSize);
+    memset(prevGrid, 0, gridSize);
+}
+
+GameOfLife::~GameOfLife()
+{
+    delete[] grid;
+    delete[] prevGrid;
+}
+
+void GameOfLife::setCell(unsigned int row, unsigned int col)
+{
+    const int w = static_cast<int>(columns); // Width
+    const int h = static_cast<int>(rows);   // Height
+    const unsigned int gridSize = rows * columns;
+
+    // Offsets to calculate the eight neighboring cells (accounting for wrap-around)
+    const int cellOffsetLeft = (col == 0) ? w - 1 : -1;
+    const int cellOffsetRight = (col == w - 1) ? -(w - 1) : 1;
+    const int cellOffsetUp = (row == 0) ? static_cast<int>(gridSize - w) : -w;
+    const int cellOffsetDown = (row == h - 1) ? -static_cast<int>(gridSize - w) : w;
+
+    unsigned char *cellPtr = grid + row * w + col;
+
+    // Activate cell
+    CELL_ACTIVATE(*cellPtr);
+
+    /* NOTE The eight neighboring cells are:
+     * AL A AR
+     * L  x  R
+     * BL B BR
+     * A ... Above
+     * B ... Below
+     * L ... Left
+     * R ... Right
+     */
+    /* NOTE we do not need to increment the alive counter of this cell
+     * since starting from the first living cell
+     * each subsequent cell will increment the counters of all its neighbors
+     */
+
+    // Change the live counter of neighbor cells
+    *(cellPtr + cellOffsetLeft) += CELL_COUNTER_INCREMENT; // L
+    *(cellPtr + cellOffsetRight) += CELL_COUNTER_INCREMENT; // R
+    *(cellPtr + cellOffsetUp) += CELL_COUNTER_INCREMENT; // A
+    *(cellPtr + cellOffsetDown) += CELL_COUNTER_INCREMENT; // B
+    *(cellPtr + cellOffsetUp + cellOffsetLeft) += CELL_COUNTER_INCREMENT; // AL
+    *(cellPtr + cellOffsetUp + cellOffsetRight) += CELL_COUNTER_INCREMENT; // AR
+    *(cellPtr + cellOffsetDown + cellOffsetLeft) += CELL_COUNTER_INCREMENT; // BL
+    *(cellPtr + cellOffsetDown + cellOffsetRight) += CELL_COUNTER_INCREMENT; // BR
+}
+
+void GameOfLife::clearCell(unsigned int row, unsigned int col)
+{
+    const int w = static_cast<int>(columns); // Width
+    const int h = static_cast<int>(rows);   // Height
+    const unsigned int gridSize = rows * columns;
+
+    // Offsets to calculate the eight neighboring cells (accounting for wrap-around)
+    const int cellOffsetLeft = (col == 0) ? w - 1 : -1;
+    const int cellOffsetRight = (col == w - 1) ? -(w - 1) : 1;
+    const int cellOffsetUp = (row == 0) ? static_cast<int>(gridSize - w) : -w;
+    const int cellOffsetDown = (row == h - 1) ? -static_cast<int>(gridSize - w) : w;
+
+    unsigned char *cellPtr = grid + row * w + col;
+
+    // Deactivate cell
+    CELL_DEACTIVATE(*cellPtr);
+
+    // Change the live counter of neighbor cells
+    *(cellPtr + cellOffsetLeft) -= CELL_COUNTER_INCREMENT; // L
+    *(cellPtr + cellOffsetRight) -= CELL_COUNTER_INCREMENT; // R
+    *(cellPtr + cellOffsetUp) -= CELL_COUNTER_INCREMENT; // A
+    *(cellPtr + cellOffsetDown) -= CELL_COUNTER_INCREMENT; // B
+    *(cellPtr + cellOffsetUp + cellOffsetLeft) -= CELL_COUNTER_INCREMENT; // AL
+    *(cellPtr + cellOffsetUp + cellOffsetRight) -= CELL_COUNTER_INCREMENT; // AR
+    *(cellPtr + cellOffsetDown + cellOffsetLeft) -= CELL_COUNTER_INCREMENT; // BL
+    *(cellPtr + cellOffsetDown + cellOffsetRight) -= CELL_COUNTER_INCREMENT; // BR
+}
+
+char GameOfLife::cellState(unsigned int row, unsigned int col) const
+{
+    return grid[row * columns + col] & 0x01 ? LIVE_CELL : DEAD_CELL;
+}
+
+void GameOfLife::next()
+{
+    memcpy(prevGrid, grid, gridSize);
+    unsigned char *cellPtr = grid;
+    for(unsigned col = 0; col < columns; ++col)
+    {
+        unsigned int row = 0;
+        do
+        {
+            // Skip dead cells with no living neighbors
+            while(*cellPtr == CELL_DEAD_NO_NEIGHBORS)
+            {
+                cellPtr++; // Move to the next cell
+                if(++row >= rows) // Check if we reached the end of the row
+                {
+                    goto RowDone;
+                }
+            }
+
+            // Cell is active or has neighbors
+            const unsigned int count = CELL_GET_COUNT(*cellPtr);
+            if(CELL_IS_ALIVE(*cellPtr))
+            {
+                // Rule: Any cell with fewer than 2 or more than 3 neighbors dies
+                if(count < RULE_STAY_ALIVE_MIN || count > RULE_STAY_ALIVE_MAX)
+                {
+                    clearCell(row, col);
+                }
+            }
+            else
+            {
+                // Rule: Any dead cell with exactly 3 neighbors becomes alive
+                if(count == RULE_BECOME_ALIVE_NEIGHBORS)
+                {
+                    setCell(row, col);
+                }
+            }
+            cellPtr++; // Move to the next cell
+        } while(++row < rows);
+    RowDone:;
     }
 }
 
-GameOfLife::~GameOfLife() = default;
 
 void GameOfLife::update(int generations) {
     for (int i = 0; i < generations; ++i) {
-        std::vector<std::vector<char>> nextGrid(rows, std::vector<char>(columns, '.'));
-        for (int row = 0; row < rows; ++row) {
-            for (int col = 0; col < columns; ++col) {
-                int livingNeighbors = countLivingNeighbors(row, col);
-                if (grid[row][col] == 'x') { // Live cell
-                    if (livingNeighbors >= RULE_STAY_ALIVE_MIN && livingNeighbors <= RULE_STAY_ALIVE_MAX) {
-                        nextGrid[row][col] = 'x'; // Cell stays alive
-                    }
-                } else { // Dead cell
-                    if (livingNeighbors == RULE_BECOME_ALIVE_NEIGHBORS) {
-                        nextGrid[row][col] = 'x'; // Cell becomes alive
-                    }
-                }
-            }
-        }
-        grid.swap(nextGrid); // Swap to avoid copying
+        next();
     }
 }
 
-const std::vector<std::vector<char>>& GameOfLife::getGrid() const {
-    return grid;
-}
-
-GameOfLife GameOfLife::fromFile(const std::string& filename) {
+GameOfLife* GameOfLife::fromFile(const std::string& filename) {
     std::ifstream inputFile(filename);
     if (!inputFile.is_open()) {
         throw std::runtime_error("Failed to open file.");
@@ -61,30 +168,31 @@ GameOfLife GameOfLife::fromFile(const std::string& filename) {
     } catch (const std::exception&) {
         throw std::runtime_error("Invalid dimensions format.");
     }
-
-    std::vector<std::vector<char>> seed;
-    seed.reserve(rows);
+    if (rows <= 0 || columns <= 0) {
+        throw std::runtime_error("Invalid dimensions.");
+    }
+    const auto game = new GameOfLife(rows, columns);
 
     std::string line;
     for (int i = 0; i < rows; ++i) {
         std::getline(inputFile, line);
-
-        // Remove carriage return (Windows line endings) or newline (Unix line endings)
-        if (!line.empty() && (line.back() == '\r' || line.back() == '\n')) {
-            line.pop_back();
-        }
-        if (!line.empty() && line.back() == '\r') {
-            line.pop_back();
-        }
-
         if (line.size() != static_cast<size_t>(columns)) {
             throw std::runtime_error("[Row " + std::to_string(i) + "] Size of row (" + std::to_string(line.size()) + ") does not match expected columns (" + std::to_string(columns) + ").");
         }
-        seed.emplace_back(line.begin(), line.end());
+        for (int j = 0; j < columns; ++j)
+        {
+            if(line[j] == '\r' || line[j] == '\n') {
+                continue;
+            }
+            if (line[j] == LIVE_CELL) {
+                game->setCell(i, j);
+            }
+            // NOTE Cells are initialized as dead by default
+        }
     }
 
     inputFile.close();
-    return GameOfLife(rows, columns, seed);
+    return game;
 }
 
 void GameOfLife::toFile(const std::string& filename) const {
@@ -94,25 +202,11 @@ void GameOfLife::toFile(const std::string& filename) const {
     }
 
     outputFile << columns << "," << rows << std::endl;
-    for (const auto& row : grid) {
-        outputFile.write(row.data(), static_cast<std::streamsize>(row.size()));
-        outputFile << std::endl; // End of row
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < columns; ++j) {
+            outputFile << cellState(i, j);
+        }
+        outputFile << std::endl;
     }
     outputFile.close();
-}
-
-int GameOfLife::countLivingNeighbors(int row, int col) const {
-    static const int directions[8][2] = {
-        {-1, -1}, {-1, 0}, {-1, 1},
-        { 0, -1},          { 0, 1},
-        { 1, -1}, { 1, 0}, { 1, 1}
-    };
-
-    int count = 0;
-    for (const auto& dir : directions) {
-        int neighborRow = (row + dir[0] + rows) % rows; // Wrap-around
-        int neighborCol = (col + dir[1] + columns) % columns; // Wrap-around
-        count += (grid[neighborRow][neighborCol] == 'x');
-    }
-    return count;
 }

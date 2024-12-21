@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Initialize Game of Life
-        GameOfLife game = GameOfLife::fromFile(inputFile);
+        GameOfLife game = *GameOfLife::fromFile(inputFile);
 
         if (measure) {
             timing->stopSetup();
