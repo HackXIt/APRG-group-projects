@@ -12,14 +12,18 @@ GameOfLife::GameOfLife(unsigned int rows, unsigned int columns)
     : rows(rows), columns(columns) {
     gridSize = rows * columns;
     grid = new unsigned char[gridSize]();
+    prevGrid = new unsigned char[gridSize]();
     memset(grid, 0, gridSize);
+    memset(prevGrid, 0, gridSize);
 }
 
 GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, const std::vector<std::vector<char>>& seed)
     : rows(rows), columns(columns) {
     gridSize = rows * columns;
     grid = new unsigned char[gridSize]();
+    prevGrid = new unsigned char[gridSize]();
     memset(grid, 0, gridSize);
+    memset(prevGrid, 0, gridSize);
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < columns; ++j) {
@@ -124,7 +128,11 @@ std::vector<std::vector<char>> GameOfLife::getGrid() const
 
 void GameOfLife::next()
 {
-    unsigned char *cellPtr = grid;
+    // Make copy of the current grid (unaltered)
+    memcpy(prevGrid, grid, gridSize);
+
+    // Process all cells in this grid
+    unsigned char *cellPtr = prevGrid;
     for(unsigned int row = 0; row < rows; ++row)
     {
         unsigned int col = 0;

@@ -39,8 +39,10 @@ public:
     std::vector<std::vector<char>> getGrid() const; // Get current grid as 2D character vector
 
     static GameOfLife* fromFile(const std::string& filename); // Initialize game from file
-
     void toFile(const std::string& filename) const; // Save current grid to file
+
+    inline unsigned int getRows() const { return rows; }
+    inline unsigned int getColumns() const { return columns; }
 
 private:
     unsigned int rows;
@@ -48,6 +50,7 @@ private:
     unsigned int gridSize;
     // NOTE Bit 0: 0=Dead, 1=Alive; Bits 1-4: Number of living neighbors; Bits 5-7: Unused
     unsigned char* grid; // 1D array to store the grid in unsigned 8-bit
+    unsigned char* prevGrid; // 1D array to store the previous grid in unsigned 8-bit
 };
 
 #endif //GAME_OF_LIFE_H
