@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
             ("g,generations", "Number of generations to simulate", cxxopts::value<int>()->default_value("100"))
             ("m,measure", "Print time measurements", cxxopts::value<bool>()->default_value("false"))
 #ifdef GUI
-            ("gui", "Enable graphical user interface (Number==cell size)", cxxopts::value<int>()->default_value("25"))
+            ("gui", "Enable graphical user interface (arg==cell size)", cxxopts::value<int>()->default_value("25"))
 #endif
             ("h,help", "Print usage");
     } catch (const cxxopts::exceptions::specification& e)
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 
         if (measure) {
             timing->stopFinalization();
-            std::cout << timing->getResults() << std::endl;
+            timing->print(true);
         }
 
     } catch (const std::exception& e) {
