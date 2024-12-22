@@ -8,17 +8,6 @@
 #include <sstream>
 #include <filesystem>
 
-// NOTE https://stackoverflow.com/questions/16491675/how-to-send-custom-message-in-google-c-testing-framework
-class TestCout : public std::stringstream
-{
-public:
-    ~TestCout()
-    {
-        std::cout << "\u001b[32m[          ] \u001b[33m" << str() << "\u001b[0m" << std::flush;
-    }
-};
-
-#define TEST_COUT  TestCout()
 
 class ScopedFile {
 public:
@@ -115,7 +104,7 @@ TEST_P(EndToEndTest, VerifyOutputMatchesExpectedWithTiming)
     timing->stopFinalization();
 
     compareFiles(outputFile, expectedFile);
-    TEST_COUT << timing->getResults() << std::endl;
+    timing->print(true);
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -124,19 +113,19 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         EndToEndTestParams{250, "random250_in.gol", "random250_out.gol"},
         EndToEndTestParams{250, "random500_in.gol", "random500_out.gol"},
-        EndToEndTestParams{250, "random750_in.gol", "random750_out.gol"}
-        // EndToEndTestParams{250, "random1000_in.gol", "random1000_out.gol"},
-        // EndToEndTestParams{250, "random1250_in.gol", "random1250_out.gol"},
-        // EndToEndTestParams{250, "random1500_in.gol", "random1500_out.gol"},
-        // EndToEndTestParams{250, "random1750_in.gol", "random1750_out.gol"},
-        // EndToEndTestParams{250, "random2000_in.gol", "random2000_out.gol"},
-        // EndToEndTestParams{250, "random3000_in.gol", "random3000_out.gol"},
-        // EndToEndTestParams{250, "random4000_in.gol", "random4000_out.gol"},
-        // EndToEndTestParams{250, "random5000_in.gol", "random5000_out.gol"},
-        // EndToEndTestParams{250, "random6000_in.gol", "random6000_out.gol"},
-        // EndToEndTestParams{250, "random7000_in.gol", "random7000_out.gol"},
-        // EndToEndTestParams{250, "random8000_in.gol", "random8000_out.gol"},
-        // EndToEndTestParams{250, "random9000_in.gol", "random9000_out.gol"},
-        // EndToEndTestParams{250, "random10000_in.gol", "random10000_out.gol"}
+        EndToEndTestParams{250, "random750_in.gol", "random750_out.gol"},
+        EndToEndTestParams{250, "random1000_in.gol", "random1000_out.gol"},
+        EndToEndTestParams{250, "random1250_in.gol", "random1250_out.gol"},
+        EndToEndTestParams{250, "random1500_in.gol", "random1500_out.gol"},
+        EndToEndTestParams{250, "random1750_in.gol", "random1750_out.gol"},
+        EndToEndTestParams{250, "random2000_in.gol", "random2000_out.gol"},
+        EndToEndTestParams{250, "random3000_in.gol", "random3000_out.gol"},
+        EndToEndTestParams{250, "random4000_in.gol", "random4000_out.gol"},
+        EndToEndTestParams{250, "random5000_in.gol", "random5000_out.gol"},
+        EndToEndTestParams{250, "random6000_in.gol", "random6000_out.gol"},
+        EndToEndTestParams{250, "random7000_in.gol", "random7000_out.gol"},
+        EndToEndTestParams{250, "random8000_in.gol", "random8000_out.gol"},
+        EndToEndTestParams{250, "random9000_in.gol", "random9000_out.gol"},
+        EndToEndTestParams{250, "random10000_in.gol", "random10000_out.gol"}
     )
 );

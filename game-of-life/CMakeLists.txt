@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.10)
 project(game_of_life)
 
-set(GUI ON CACHE BOOL "Build with GUI support")
+#set(GUI ON CACHE BOOL "Build with GUI support")
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 # Set optimization flags for the Release build type
