@@ -183,7 +183,9 @@ void GameOfLife::nextP()
 {
     std::memcpy(prevGrid, grid, gridSize);
 
-    int num_threads = omp_get_max_threads();
+    // Calculate the number of threads based on the board size
+    int max_possible_threads = rows / 3; // Minimum rows per thread (1 data row + 2 ghost rows)
+    int num_threads = std::min(omp_get_max_threads(), max_possible_threads);
 
     // ghostRowCount is the amount of leftover rows that are not assigned to any thread
     // Additionally, we calculate the number of rows each thread will handle
@@ -207,7 +209,7 @@ void GameOfLife::nextP()
         ghostAndLastRowArray.push_back(row);
     }
 
-    #pragma omp parallel
+    #pragma omp parallel num_threads(num_threads)
     {
         // This is a private section for each thread
         int thread_id = omp_get_thread_num();
