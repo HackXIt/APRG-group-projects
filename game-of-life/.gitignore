@@ -1,0 +1,9 @@
+verify_expected
+verify_input
+Abgabe
+result
+game_of_life.exe
+*.csv
+*.zip
+include/cxxopts.hpp
+*.gol

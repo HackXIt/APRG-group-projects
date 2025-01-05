@@ -4,6 +4,3 @@
 [submodule "extern/epsilon"]
 	path = extern/epsilon
 	url = https://github.com/Jojendersie/Epsilon-Intersection.git
-[submodule "extern/cxxopts"]
-	path = extern/cxxopts
-	url = https://github.com/jarro2783/cxxopts.git
