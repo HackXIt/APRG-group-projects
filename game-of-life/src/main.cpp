@@ -24,6 +24,9 @@ int main(int argc, char* argv[]) {
             ("s,save", "Filename to save output board", cxxopts::value<std::string>()->default_value("output.gol"))
             ("g,generations", "Number of generations to simulate", cxxopts::value<int>()->default_value("100"))
             ("m,measure", "Print time measurements", cxxopts::value<bool>()->default_value("false"))
+        ("p,pretty", "Pretty print the measurement results", cxxopts::value<bool>()->default_value("false"))
+            ("mode", "Configure execution mode ('seq'=='sequential', 'par'|'omp'=='parallel')", cxxopts::value<std::string>()->default_value("seq"))
+            ("threads", "Number of threads to use in parallel mode", cxxopts::value<int>()->default_value("4"))
 #ifdef GUI
             ("gui", "Enable graphical user interface (arg==cell size)", cxxopts::value<int>()->default_value("25"))
 #endif
@@ -63,6 +66,9 @@ int main(int argc, char* argv[]) {
         std::string outputFile = result["save"].as<std::string>();
         int generations = result["generations"].as<int>();
         bool measure = result["measure"].as<bool>();
+        bool pretty = result["pretty"].as<bool>();
+        std::string mode = result["mode"].as<std::string>();
+        int threads = result["threads"].as<int>();
 #ifdef GUI
         int cell_size = result["gui"].as<int>();
         if(result.count("gui"))
@@ -78,7 +84,19 @@ int main(int argc, char* argv[]) {
             timing->startSetup();
         }
 
-        game = GameOfLife::fromFile(inputFile);
+        if(mode == "seq")
+        {
+            game = GameOfLife::fromFile(inputFile, false);
+        }
+        else if(mode.rfind("par",0) == 0 || mode.rfind("omp",0) == 0) // Check if mode starts with 'par' or 'omp'
+        {
+            game = GameOfLife::fromFile(inputFile, true, threads);
+        }
+        else
+        {
+            std::cerr << "Error: Invalid mode. Use 'seq' for sequential mode or 'par' for parallel mode." << std::endl;
+            return 1;
+        }
 
         if (measure) {
             timing->stopSetup();
@@ -98,7 +116,14 @@ int main(int argc, char* argv[]) {
 
         if (measure) {
             timing->stopFinalization();
-            timing->print(true);
+            if(pretty)
+            {
+                timing->print(true);
+                std::cout << "Simulation complete." << std::endl;
+            } else
+            {
+                std::cout << timing->getResults() << std::endl;
+            }
         }
 
     } catch (const std::exception& e) {
@@ -107,6 +132,5 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     delete game;
-    std::cout << "Simulation complete." << std::endl;
     return 0;
 }

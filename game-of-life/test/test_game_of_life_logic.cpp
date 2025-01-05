@@ -24,6 +24,8 @@ public:
 struct LogicTestParams {
     int rows;
     int columns;
+    bool parallel;
+    unsigned int threads;
     std::vector<std::vector<char>> initialState;
     std::vector<std::vector<char>> expectedState;
 };
@@ -31,6 +33,8 @@ struct LogicTestParams {
 struct LogicMultipleTestParams {
     int rows;
     int columns;
+    bool parallel;
+    unsigned int threads;
     int generations;
     std::vector<std::vector<char>> initialState;
     std::vector<std::vector<char>> expectedState;
@@ -42,8 +46,14 @@ class LogicTestMultipleGenerations : public ::testing::TestWithParam<LogicMultip
 
 TEST_P(LogicTest, VerifyUpdateLogic) {
     LogicTestParams params = GetParam();
-    GameOfLife game(params.rows, params.columns, params.initialState);
-    game.next();
+    GameOfLife game(params.rows, params.columns, params.parallel, params.threads, params.initialState);
+    if(params.parallel)
+    {
+        game.nextP();
+    } else
+    {
+        game.next();
+    }
     EXPECT_EQ(game.getGrid(), params.expectedState);
 }
 
@@ -51,10 +61,16 @@ TEST_P(LogicTest, VerifyUpdateLogicTiming) {
     LogicTestParams params = GetParam();
     Timing* timing = Timing::getInstance();
     timing->startSetup();
-    GameOfLife game(params.rows, params.columns, params.initialState);
+    GameOfLife game(params.rows, params.columns, params.parallel, params.threads, params.initialState);
     timing->stopSetup();
     timing->startComputation();
-    game.next();
+    if(params.parallel)
+    {
+        game.nextP();
+    } else
+    {
+        game.next();
+    }
     timing->stopComputation();
     timing->startFinalization();
     EXPECT_EQ(game.getGrid(), params.expectedState);
@@ -64,7 +80,7 @@ TEST_P(LogicTest, VerifyUpdateLogicTiming) {
 
 TEST_P(LogicTestMultipleGenerations, VerifyUpdateLogicMultipleGenerations) {
     LogicMultipleTestParams params = GetParam();
-    GameOfLife game(params.rows, params.columns, params.initialState);
+    GameOfLife game(params.rows, params.columns, params.parallel, params.threads, params.initialState);
     game.update(params.generations);
     EXPECT_EQ(game.getGrid(), params.expectedState);
 }
@@ -73,7 +89,7 @@ TEST_P(LogicTestMultipleGenerations, VerifyUpdateLogicMultipleGenerationsTiming)
     LogicMultipleTestParams params = GetParam();
     Timing* timing = Timing::getInstance();
     timing->startSetup();
-    GameOfLife game(params.rows, params.columns, params.initialState);
+    GameOfLife game(params.rows, params.columns, params.parallel, params.threads, params.initialState);
     timing->stopSetup();
     timing->startComputation();
     game.update(params.generations);
@@ -91,13 +107,35 @@ INSTANTIATE_TEST_SUITE_P(
         LogicTestParams{
             3,
             3,
+            false,
+            1,
             {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}},
-            {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}},
+            {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}
+        },
         LogicTestParams{
             4,
             4,
+            false,
+            1,
             {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}},
-            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}}
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}
+        },
+        LogicTestParams{
+            3,
+            3,
+            true,
+            4,
+            {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}},
+            {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}
+        },
+        LogicTestParams{
+            4,
+            4,
+            true,
+            4,
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}},
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}
+        }
     )
 );
 
@@ -108,12 +146,34 @@ INSTANTIATE_TEST_SUITE_P(
         LogicMultipleTestParams{
             3,
             3,
+            false,
+            1,
             2,
             {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}},
             {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}
         },
         LogicMultipleTestParams{
             4,
+            4,
+            false,
+            1,
+            2,
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}},
+            {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}}
+        },
+        LogicMultipleTestParams{
+            3,
+            3,
+            true,
+            4,
+            2,
+            {{'.', '.', '.'}, {'.', 'x', '.'}, {'.', '.', '.'}},
+            {{'.', '.', '.'}, {'.', '.', '.'}, {'.', '.', '.'}}
+        },
+        LogicMultipleTestParams{
+            4,
+            4,
+            true,
             4,
             2,
             {{'.', '.', '.', '.'}, {'.', 'x', 'x', '.'}, {'.', 'x', 'x', '.'}, {'.', '.', '.', '.'}},

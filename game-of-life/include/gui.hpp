@@ -4,7 +4,7 @@
 
 #ifndef GUI_H
 #define GUI_H
-#include "game_of_life.h"
+#include "game_of_life.hpp"
 
 int runGui(GameOfLife& game, int cellSize);
 

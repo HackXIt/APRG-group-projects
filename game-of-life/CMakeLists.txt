@@ -16,6 +16,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cxxopts)
 
+# OpenMP setup
+find_package(OpenMP REQUIRED)
+
 # Fetch the source code of SFML (if GUI defined)
 if(GUI)
     include(FetchContent)
@@ -42,6 +45,10 @@ if(GUI)
 else()
     add_executable(${PROJECT_NAME} src/main.cpp src/Timing.cpp)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_lib -static-libgcc -static-libstdc++)
+endif()
+if(OpenMP_CXX_FOUND)
+    target_compile_options(${PROJECT_NAME}_lib PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(${PROJECT_NAME}_lib PRIVATE OpenMP::OpenMP_CXX)
 endif()
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 

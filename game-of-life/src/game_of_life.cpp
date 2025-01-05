@@ -3,41 +3,55 @@
 //
 
 #include "game_of_life.hpp"
+#include <omp.h>
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
 
-GameOfLife::GameOfLife(unsigned int rows, unsigned int columns)
-    : rows(rows), columns(columns) {
+// PUBLIC
+
+GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, bool parallel, unsigned int threads)
+    : rows(rows),columns(columns)
+{
     gridSize = rows * columns;
-    grid = new unsigned char[gridSize]();
-    prevGrid = new unsigned char[gridSize]();
-    memset(grid, 0, gridSize);
-    memset(prevGrid, 0, gridSize);
+    this->parallel = parallel;
+    this->threads = threads;
+    if (parallel) {
+        gridStates = std::vector<bool>(gridSize, false);
+        gridCounts = std::vector<unsigned char>(gridSize, 0);
+    } else {
+        grid = new unsigned char[gridSize];
+        prevGrid = new unsigned char[gridSize];
+        memset(grid, 0, gridSize);
+        memset(prevGrid, 0, gridSize);
+    }
 }
 
-GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, const std::vector<std::vector<char>>& seed)
-    : rows(rows), columns(columns) {
-    gridSize = rows * columns;
-    grid = new unsigned char[gridSize]();
-    prevGrid = new unsigned char[gridSize]();
-    memset(grid, 0, gridSize);
-    memset(prevGrid, 0, gridSize);
-
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < columns; ++j) {
-            if (seed[i][j] == LIVE_CELL) {
-                setCell(i, j);
-            }
-            // NOTE Cells are initialized as dead by default
-        }
+GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, bool parallel, unsigned int threads, const std::vector<std::vector<char>>& seed)
+    : GameOfLife(rows, columns, parallel, threads) {
+    if(parallel)
+    {
+        initialize_from_seed_p(seed);
+    }
+    else
+    {
+        initialize_from_seed(seed);
     }
 }
 
 GameOfLife::~GameOfLife()
 {
-    delete[] grid;
+    if(parallel)
+    {
+        gridStates.clear();
+        gridCounts.clear();
+    }
+    else
+    {
+        delete[] grid;
+        delete[] prevGrid;
+    }
 }
 
 void GameOfLife::setCell(unsigned int row, unsigned int col)
@@ -52,7 +66,7 @@ void GameOfLife::setCell(unsigned int row, unsigned int col)
     const int cellOffsetUp = (row == 0) ? static_cast<int>(gridSize - w) : -w;
     const int cellOffsetDown = (row == h - 1) ? -static_cast<int>(gridSize - w) : w;
 
-    unsigned char *cellPtr = grid + row * w + col;
+    unsigned char *cellPtr = grid + (row * w) + col;
 
     // Activate cell
     CELL_ACTIVATE(*cellPtr);
@@ -112,6 +126,10 @@ void GameOfLife::clearCell(unsigned int row, unsigned int col)
 
 char GameOfLife::cellState(unsigned int row, unsigned int col) const
 {
+    if(parallel)
+    {
+        return gridStates[row * columns + col] ? LIVE_CELL : DEAD_CELL;
+    }
     return CELL_IS_ALIVE(grid[row * columns + col]) ? LIVE_CELL : DEAD_CELL;
 }
 
@@ -172,14 +190,68 @@ void GameOfLife::next()
     }
 }
 
-
-void GameOfLife::update(int generations) {
-    for (int i = 0; i < generations; ++i) {
-        next();
+void GameOfLife::nextP()
+{
+    std::vector<bool> prevGridStates = gridStates;
+    std::vector<unsigned char> prevGridCounts = gridCounts;
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < columns; ++j)
+        {
+            // Count neighbors from prevGrid
+            unsigned int count = 0;
+            // A small function to wrap index around (toroidal):
+            auto idx = [&](unsigned int r, unsigned int c) {
+                // wrap row and col for boundaries:
+                r = (r + rows) % rows;
+                c = (c + columns) % columns;
+                return r * columns + c;
+            };
+            // Check all 8 neighbors
+            for (int dr = -1; dr <= 1; ++dr) {
+                for (int dc = -1; dc <= 1; ++dc) {
+                    if (dr == 0 && dc == 0) continue; // skip self
+                    if (prevGridStates[idx(i + dr, j + dc)]) {
+                        count++;
+                    }
+                }
+            }
+            // Update cell state
+            if (prevGridStates[i * columns + j]) {
+                // Rule: Any cell with fewer than 2 or more than 3 neighbors dies
+                if (count < RULE_STAY_ALIVE_MIN || count > RULE_STAY_ALIVE_MAX) {
+                    gridStates[i * columns + j] = false;
+                }
+            } else {
+                // Rule: Any dead cell with exactly 3 neighbors becomes alive
+                if (count == RULE_BECOME_ALIVE_NEIGHBORS) {
+                    gridStates[i * columns + j] = true;
+                }
+            }
+        }
     }
 }
 
-GameOfLife* GameOfLife::fromFile(const std::string& filename) {
+
+
+void GameOfLife::update(int generations) {
+    if(parallel)
+    {
+        for (int i = 0; i < generations; ++i) {
+            nextP();
+        }
+    }
+    else
+    {
+        for (int i = 0; i < generations; ++i) {
+            next();
+        }
+    }
+}
+
+GameOfLife* GameOfLife::fromFile(const std::string& filename, bool parallel, unsigned int threads) {
     std::ifstream inputFile(filename);
     if (!inputFile.is_open()) {
         throw std::runtime_error("Failed to open file.");
@@ -240,4 +312,31 @@ void GameOfLife::toFile(const std::string& filename) const {
         outputFile << std::endl;
     }
     outputFile.close();
+}
+
+// PRIVATE
+
+void GameOfLife::initialize_from_seed(const std::vector<std::vector<char>>& seed)
+{
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < columns; ++j) {
+            if (seed[i][j] == LIVE_CELL) {
+                setCell(i, j);
+            }
+            // NOTE Cells are initialized as dead by default
+        }
+    }
+}
+
+void GameOfLife::initialize_from_seed_p(const std::vector<std::vector<char>>& seed)
+{
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < columns; ++j) {
+            if (seed[i][j] == LIVE_CELL) {
+                gridStates[i * columns + j] = true;
+
+            }
+            // NOTE Cells are initialized as dead by default
+        }
+    }
 }
