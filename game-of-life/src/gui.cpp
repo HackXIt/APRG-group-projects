@@ -2,7 +2,7 @@
 // Created by RINI on 22/12/2024.
 //
 
-#include "gui.h"
+#include "gui.hpp"
 #include <SFML/Graphics.hpp>
 
 int runGui(GameOfLife& game, int cellSize) {

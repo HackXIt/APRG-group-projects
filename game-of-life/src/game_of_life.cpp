@@ -2,7 +2,7 @@
 // Created by RINI on 21/12/2024.
 //
 
-#include "game_of_life.h"
+#include "game_of_life.hpp"
 #include <cstring>
 #include <fstream>
 #include <stdexcept>

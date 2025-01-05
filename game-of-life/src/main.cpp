@@ -5,11 +5,11 @@
 #include <cxxopts.hpp> // Include the external cxxopts library
 #include <iostream>
 #include <string>
-#include "game_of_life.h"
+#include "game_of_life.hpp"
 #include "Timing.h"
 
 #ifdef GUI
-#include "gui.h"
+#include "gui.hpp"
 #endif
 
 int main(int argc, char* argv[]) {
