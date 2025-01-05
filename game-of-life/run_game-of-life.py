@@ -3,8 +3,6 @@ import argparse
 import logging
 import subprocess
 import difflib
-from collections.abc import Iterable
-from typing import Union, LiteralString
 
 FILENAME_CPU_TIMINGS = '_cpu_time.csv'
 FILENAME_OPENMP_TIMINGS = '_openmp_time.csv'

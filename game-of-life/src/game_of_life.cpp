@@ -1,5 +1,6 @@
 ﻿//
 // Created by RINI on 21/12/2024.
+// Optimizations inspired by: https://www.youtube.com/watch?v=ndAfWKmKF34
 //
 
 #include "game_of_life.hpp"
@@ -11,47 +12,39 @@
 
 // PUBLIC
 
+class MaxThreadExceededException : public std::exception
+{
+    virtual const char* what() const throw()
+    {
+        return "Number of threads exceeds the maximum number of threads available";
+    }
+};
+
 GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, bool parallel, unsigned int threads)
-    : rows(rows),columns(columns)
+    : rows(rows),columns(columns),parallel(parallel)
 {
     gridSize = rows * columns;
-    this->parallel = parallel;
-    this->threads = threads;
-    if (parallel) {
-        gridStates = std::vector<bool>(gridSize, false);
-        gridCounts = std::vector<unsigned char>(gridSize, 0);
-    } else {
-        grid = new unsigned char[gridSize];
-        prevGrid = new unsigned char[gridSize];
-        memset(grid, 0, gridSize);
-        memset(prevGrid, 0, gridSize);
+    grid = new unsigned char[gridSize];
+    prevGrid = new unsigned char[gridSize];
+    memset(grid, 0, gridSize);
+    memset(prevGrid, 0, gridSize);
+    if(threads > omp_get_max_threads())
+    {
+        throw MaxThreadExceededException();
     }
+    this->threads = threads;
+    omp_set_num_threads(this->threads);
 }
 
 GameOfLife::GameOfLife(unsigned int rows, unsigned int columns, bool parallel, unsigned int threads, const std::vector<std::vector<char>>& seed)
     : GameOfLife(rows, columns, parallel, threads) {
-    if(parallel)
-    {
-        initialize_from_seed_p(seed);
-    }
-    else
-    {
-        initialize_from_seed(seed);
-    }
+    initialize_from_seed(seed);
 }
 
 GameOfLife::~GameOfLife()
 {
-    if(parallel)
-    {
-        gridStates.clear();
-        gridCounts.clear();
-    }
-    else
-    {
-        delete[] grid;
-        delete[] prevGrid;
-    }
+    delete[] grid;
+    delete[] prevGrid;
 }
 
 void GameOfLife::setCell(unsigned int row, unsigned int col)
@@ -126,10 +119,6 @@ void GameOfLife::clearCell(unsigned int row, unsigned int col)
 
 char GameOfLife::cellState(unsigned int row, unsigned int col) const
 {
-    if(parallel)
-    {
-        return gridStates[row * columns + col] ? LIVE_CELL : DEAD_CELL;
-    }
     return CELL_IS_ALIVE(grid[row * columns + col]) ? LIVE_CELL : DEAD_CELL;
 }
 
@@ -192,44 +181,103 @@ void GameOfLife::next()
 
 void GameOfLife::nextP()
 {
-    std::vector<bool> prevGridStates = gridStates;
-    std::vector<unsigned char> prevGridCounts = gridCounts;
-    omp_set_num_threads(threads);
-    #pragma omp parallel for
-    for (int i = 0; i < rows; ++i)
+    std::memcpy(prevGrid, grid, gridSize);
+
+    int num_threads = omp_get_max_threads();
+
+    // ghostRowCount is the amount of leftover rows that are not assigned to any thread
+    // Additionally, we calculate the number of rows each thread will handle
+    // Lastly, we calculate the leftover rows that are not divisible by the number of threads (i.e. remainder)
+    int ghostRowCount = num_threads + num_threads;
+    int numOfRowsForEachThread = (rows - ghostRowCount) / num_threads;
+    unsigned int leftover = (rows - ghostRowCount) % num_threads;
+
+    // Dynamically create a vector of the row numbers, which will be handled after the parallel region
+    std::vector<unsigned int> ghostAndLastRowArray;
+    ghostAndLastRowArray.reserve(ghostRowCount + leftover);
+
+    // Dividable by two because of num_threads + num_threads (above)
+    for (unsigned int i = 0; i < ghostRowCount / 2; ++i) {
+        ghostAndLastRowArray.push_back(numOfRowsForEachThread * (i + 1) + (i * 2)); // NOTE We choose to have 2 ghost rows
+        ghostAndLastRowArray.push_back(numOfRowsForEachThread * (i + 1) + (i * 2) + 1); // Second ghost row from above
+    }
+
+    // Add the leftover rows
+    for (unsigned int row = rows - leftover; row < rows; ++row) {
+        ghostAndLastRowArray.push_back(row);
+    }
+
+    #pragma omp parallel
     {
-        for (int j = 0; j < columns; ++j)
-        {
-            // Count neighbors from prevGrid
-            unsigned int count = 0;
-            // A small function to wrap index around (toroidal):
-            auto idx = [&](unsigned int r, unsigned int c) {
-                // wrap row and col for boundaries:
-                r = (r + rows) % rows;
-                c = (c + columns) % columns;
-                return r * columns + c;
-            };
-            // Check all 8 neighbors
-            for (int dr = -1; dr <= 1; ++dr) {
-                for (int dc = -1; dc <= 1; ++dc) {
-                    if (dr == 0 && dc == 0) continue; // skip self
-                    if (prevGridStates[idx(i + dr, j + dc)]) {
-                        count++;
+        // This is a private section for each thread
+        int thread_id = omp_get_thread_num();
+
+        // Calculate chunk for this thread
+        unsigned int start = thread_id * numOfRowsForEachThread + (thread_id * 2);
+        unsigned int end   = start + numOfRowsForEachThread; // +2 ghost rows and then the next thread starts
+
+        // Pointer to data
+        unsigned char* cellPtr = prevGrid + (start * columns);
+
+        // Perform next operation (same as sequential, only with a chunk of rows)
+        for (unsigned int row = start; row < end; ++row) {
+            for (unsigned int col = 0; col < columns; ++col) {
+                if (*cellPtr == CELL_DEAD_NO_NEIGHBORS) {
+                    ++cellPtr;
+                    continue;
+                }
+
+                // Cell is active or has neighbors
+                const unsigned int count = CELL_GET_COUNT(*cellPtr);
+                if(CELL_IS_ALIVE(*cellPtr))
+                {
+                    // Rule: Any cell with fewer than 2 or more than 3 neighbors dies
+                    if(count < RULE_STAY_ALIVE_MIN || count > RULE_STAY_ALIVE_MAX)
+                    {
+                        clearCell(row, col);
                     }
                 }
+                else
+                {
+                    // Rule: Any dead cell with exactly 3 neighbors becomes alive
+                    if(count == RULE_BECOME_ALIVE_NEIGHBORS)
+                    {
+                        setCell(row, col);
+                    }
+                }
+                ++cellPtr;
             }
-            // Update cell state
-            if (prevGridStates[i * columns + j]) {
+        }
+    } // end parallel region
+
+    // Perform next() operation on all unhandled rows
+    for (unsigned int row : ghostAndLastRowArray) {
+        unsigned char* cellPtr = prevGrid + (row * columns);
+        for (unsigned int col = 0; col < columns; ++col) {
+            if (*cellPtr == CELL_DEAD_NO_NEIGHBORS) {
+                ++cellPtr;
+                continue;
+            }
+
+            // Cell is active or has neighbors
+            const unsigned int count = CELL_GET_COUNT(*cellPtr);
+            if(CELL_IS_ALIVE(*cellPtr))
+            {
                 // Rule: Any cell with fewer than 2 or more than 3 neighbors dies
-                if (count < RULE_STAY_ALIVE_MIN || count > RULE_STAY_ALIVE_MAX) {
-                    gridStates[i * columns + j] = false;
-                }
-            } else {
-                // Rule: Any dead cell with exactly 3 neighbors becomes alive
-                if (count == RULE_BECOME_ALIVE_NEIGHBORS) {
-                    gridStates[i * columns + j] = true;
+                if(count < RULE_STAY_ALIVE_MIN || count > RULE_STAY_ALIVE_MAX)
+                {
+                    clearCell(row, col);
                 }
             }
+            else
+            {
+                // Rule: Any dead cell with exactly 3 neighbors becomes alive
+                if(count == RULE_BECOME_ALIVE_NEIGHBORS)
+                {
+                    setCell(row, col);
+                }
+            }
+            ++cellPtr;
         }
     }
 }
@@ -274,7 +322,7 @@ GameOfLife* GameOfLife::fromFile(const std::string& filename, bool parallel, uns
     if (rows <= 0 || columns <= 0) {
         throw std::runtime_error("Invalid dimensions.");
     }
-    const auto game = new GameOfLife(rows, columns);
+    const auto game = new GameOfLife(rows, columns, parallel, threads);
 
     std::string line;
     for (int i = 0; i < rows; ++i) {
@@ -318,23 +366,11 @@ void GameOfLife::toFile(const std::string& filename) const {
 
 void GameOfLife::initialize_from_seed(const std::vector<std::vector<char>>& seed)
 {
+    // NOTE Did not bother to parallize this, it was fast enough
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < columns; ++j) {
             if (seed[i][j] == LIVE_CELL) {
                 setCell(i, j);
-            }
-            // NOTE Cells are initialized as dead by default
-        }
-    }
-}
-
-void GameOfLife::initialize_from_seed_p(const std::vector<std::vector<char>>& seed)
-{
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < columns; ++j) {
-            if (seed[i][j] == LIVE_CELL) {
-                gridStates[i * columns + j] = true;
-
             }
             // NOTE Cells are initialized as dead by default
         }

@@ -4,6 +4,7 @@
 
 #include <cxxopts.hpp> // Include the external cxxopts library
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "game_of_life.hpp"
 #include "Timing.h"
@@ -24,7 +25,8 @@ int main(int argc, char* argv[]) {
             ("s,save", "Filename to save output board", cxxopts::value<std::string>()->default_value("output.gol"))
             ("g,generations", "Number of generations to simulate", cxxopts::value<int>()->default_value("100"))
             ("m,measure", "Print time measurements", cxxopts::value<bool>()->default_value("false"))
-        ("p,pretty", "Pretty print the measurement results", cxxopts::value<bool>()->default_value("false"))
+            ("p,pretty", "Pretty print the measurement results", cxxopts::value<bool>()->default_value("false"))
+            ("csv", "Write time measurements to a CSV file", cxxopts::value<bool>()->default_value("false"))
             ("mode", "Configure execution mode ('seq'=='sequential', 'par'|'omp'=='parallel')", cxxopts::value<std::string>()->default_value("seq"))
             ("threads", "Number of threads to use in parallel mode", cxxopts::value<int>()->default_value("4"))
 #ifdef GUI
@@ -67,6 +69,8 @@ int main(int argc, char* argv[]) {
         int generations = result["generations"].as<int>();
         bool measure = result["measure"].as<bool>();
         bool pretty = result["pretty"].as<bool>();
+        bool csv = result["csv"].as<bool>();
+        bool parallel = false;
         std::string mode = result["mode"].as<std::string>();
         int threads = result["threads"].as<int>();
 #ifdef GUI
@@ -84,13 +88,14 @@ int main(int argc, char* argv[]) {
             timing->startSetup();
         }
 
-        if(mode == "seq")
+        if(mode.rfind("seq",0) == 0)
         {
-            game = GameOfLife::fromFile(inputFile, false);
+            game = GameOfLife::fromFile(inputFile, parallel);
         }
         else if(mode.rfind("par",0) == 0 || mode.rfind("omp",0) == 0) // Check if mode starts with 'par' or 'omp'
         {
-            game = GameOfLife::fromFile(inputFile, true, threads);
+            parallel = true;
+            game = GameOfLife::fromFile(inputFile, parallel, threads);
         }
         else
         {
@@ -123,6 +128,17 @@ int main(int argc, char* argv[]) {
             } else
             {
                 std::cout << timing->getResults() << std::endl;
+            }
+            if(csv)
+            {
+                // Write measurements to CSV file, appending
+                std::string csvFilename = parallel ? "ai24m040_openmp_time.csv" : "ai24m040_cpu_time.csv";
+                std::ofstream time_file(csvFilename, std::ios::app);
+                if (time_file.is_open())
+                {
+                    time_file << timing->getResults() << std::endl;
+                    time_file.close();
+                }
             }
         }
 

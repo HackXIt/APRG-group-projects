@@ -24,10 +24,6 @@
 #define CELL_ACTIVATE(x) (x |= 0x01)
 #define CELL_DEACTIVATE(x) (x &= 0xFE)
 
-// Macros for PARALLEL mode
-#define CELL_DEAD_NO_NEIGHBORS_P 0x00
-#define CELL_COUNTER_INCREMENT_P 0x01
-
 
 class GameOfLife {
 public:
@@ -57,15 +53,10 @@ private:
     unsigned int gridSize;
     bool parallel;
     unsigned int threads;
-    // Parallel mode properties
-    std::vector<bool> gridStates;
-    std::vector<unsigned char> gridCounts;
-    // Sequential mode properties
     unsigned char *grid; // Current grid
     unsigned char *prevGrid; // Previous grid (unaltered)
 
-    void initialize_from_seed(const std::vector<std::vector<char>>& seed); // Initialize grid from seed (sequential)
-    void initialize_from_seed_p(const std::vector<std::vector<char>>& seed); // Initialize grid from seed (parallel)
+    void initialize_from_seed(const std::vector<std::vector<char>>& seed); // Initialize grid from seed
 };
 
 #endif //GAME_OF_LIFE_H
