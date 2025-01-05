@@ -10,7 +10,7 @@
 )
 
 function Compile {
-	g++ -O3 -march=native -static -fopenmp -o game_of_life.exe main.cpp Timing.cpp game_of_life.cpp
+	g++ -O3 -march=native -static -fopenmp -o game_of_life.exe src/main.cpp src/Timing.cpp src/game_of_life.cpp -Iinclude/
 	return ".\game_of_life.exe"
 }
 
